@@ -13,13 +13,13 @@ export default function LoginPage() {
     e.preventDefault()
     setError(null)
     setLoading(true)
-  
+
     const supabase = createClient()
     const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
-  
+
     if (authError) {
       const message =
         authError.message === 'Invalid login credentials'
@@ -29,24 +29,26 @@ export default function LoginPage() {
       setLoading(false)
       return
     }
-  
+
     if (data.session) {
       await new Promise(resolve => setTimeout(resolve, 300))
       window.location.href = '/dashboard'
       return
     }
-  
+
     setError('Login gagal, coba lagi.')
     setLoading(false)
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-surface border border-border rounded-xl p-8">
+    <div className="flex flex-1 items-center justify-center px-4 py-10">
+      <div className="w-full max-w-[420px] bg-surface border border-border rounded-2xl p-8 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
         <div className="mb-8 text-center">
-          <h1 className="text-xl font-semibold text-text">HL</h1>
-          <p className="text-sm text-text-secondary mt-1">
-            Sales & Receivables
+          <h1 className="text-[48px] font-bold text-accent leading-none tracking-tight">
+            HL
+          </h1>
+          <p className="text-[17px] text-text-secondary mt-3 font-medium">
+            Selamat Datang
           </p>
         </div>
 
@@ -54,7 +56,7 @@ export default function LoginPage() {
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-text-secondary mb-1.5"
+              className="block text-[15px] font-semibold text-text mb-1.5"
             >
               Email
             </label>
@@ -64,15 +66,16 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-sm text-text placeholder-text-muted outline-none focus:border-accent transition-colors"
+              className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-[16px] text-text placeholder-text-muted outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
               placeholder="admin@hl.com"
+              style={{ height: '52px' }}
             />
           </div>
 
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-text-secondary mb-1.5"
+              className="block text-[15px] font-semibold text-text mb-1.5"
             >
               Password
             </label>
@@ -82,13 +85,14 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-sm text-text placeholder-text-muted outline-none focus:border-accent transition-colors"
-              placeholder="••••••••"
+              className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-[16px] text-text placeholder-text-muted outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
+              placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+              style={{ height: '52px' }}
             />
           </div>
 
           {error && (
-            <div className="bg-danger-dim border border-danger/30 rounded-lg px-3 py-2 text-sm text-danger">
+            <div className="bg-danger-bg border border-danger/30 rounded-xl px-4 py-3 text-[15px] text-danger font-medium">
               {error}
             </div>
           )}
@@ -96,7 +100,8 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-accent text-white font-medium rounded-lg px-4 py-2.5 text-sm hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full bg-accent hover:bg-[#256F28] text-white font-semibold rounded-xl px-6 py-3 text-[15px] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ height: '52px' }}
           >
             {loading ? 'Memproses...' : 'Masuk'}
           </button>

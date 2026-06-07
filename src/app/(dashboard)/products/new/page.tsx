@@ -5,8 +5,9 @@ import ProductForm from '@/components/products/ProductForm'
 
 export default function NewProductPage() {
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center gap-2 text-sm text-text-muted mb-2">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-[13px] text-text-muted">
         <Link href="/products" className="hover:text-text transition-colors">
           Produk
         </Link>
@@ -14,8 +15,10 @@ export default function NewProductPage() {
         <span className="text-text-secondary">Tambah Baru</span>
       </div>
 
-      <h1 className="text-lg font-semibold text-text">Tambah Produk Baru</h1>
-      <ProductForm />
+      <h1 className="text-[22px] md:text-[28px] font-bold text-text">Tambah Produk Baru</h1>
+      <div className="max-w-[720px]">
+        <ProductForm />
+      </div>
     </div>
   )
 }

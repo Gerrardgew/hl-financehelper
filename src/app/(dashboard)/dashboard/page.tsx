@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { formatRupiah, formatDate } from '@/lib/utils'
+import { calculateBonusAvailable } from '@/lib/bonus'
+import BonusAlert from '@/components/bonus/BonusAlert'
 
 function getMonthBoundaries() {
   const now = new Date()
@@ -43,23 +45,36 @@ interface CustomerRecord {
 }
 
 function StatCard({
+  icon,
   title,
   value,
   subtitle,
+  colorClass,
 }: {
+  icon: string
   title: string
   value: string
   subtitle: string
+  colorClass: string
 }) {
   return (
-    <div className="bg-surface border border-border rounded-xl p-5">
-      <p className="text-xs text-text-muted uppercase tracking-wider font-medium">
-        {title}
-      </p>
-      <p className="text-2xl font-mono font-medium text-text mt-2">{value}</p>
-      <p className="text-xs text-text-secondary mt-1">{subtitle}</p>
+    <div className="bg-surface border border-border rounded-2xl p-4 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] flex items-center gap-4 md:gap-5 min-h-[90px] md:h-[120px]">
+      <span className="text-[40px] shrink-0">{icon}</span>
+      <div className="min-w-0">
+        <p className="text-[14px] text-text-secondary font-medium">{title}</p>
+          <p className={`text-[22px] md:text-[28px] font-bold font-mono mt-1 ${colorClass}`}>{value}</p>
+        <p className="text-[13px] text-text-muted mt-0.5">{subtitle}</p>
+      </div>
     </div>
   )
+}
+
+function getGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Selamat pagi'
+  if (hour < 15) return 'Selamat siang'
+  if (hour < 18) return 'Selamat sore'
+  return 'Selamat malam'
 }
 
 export default async function DashboardPage() {
@@ -128,24 +143,20 @@ export default async function DashboardPage() {
     totalPiutang += lineSum + (t.ongkir ?? 0)
   }
 
-  const eligibleCustomers: { nama: string; available: number }[] = []
+  const eligibleCustomers: {
+    id: string
+    nama: string
+    available: number
+  }[] = []
   for (const customer of customers) {
-    const { data: paidTx } = await supabase
-      .from('transactions')
-      .select('id')
-      .eq('customer_id', customer.id)
-      .eq('status', 'Lunas')
-      .eq('is_bonus', false)
-
-    if (!paidTx || paidTx.length === 0) continue
-
-    const txIds = paidTx.map((t) => t.id)
-    const { data: lines } = await supabase
+    const { data: paidLines } = await supabase
       .from('transaction_lines')
-      .select('omzet')
-      .in('transaction_id', txIds)
+      .select('omzet, transactions!inner(customer_id, status, is_bonus)')
+      .eq('transactions.customer_id', customer.id)
+      .eq('transactions.status', 'Lunas')
+      .eq('transactions.is_bonus', false)
 
-    const paidOmzet = (lines ?? []).reduce(
+    const paidOmzet = (paidLines ?? []).reduce(
       (sum, l) => sum + ((l as { omzet: number }).omzet ?? 0),
       0
     )
@@ -155,71 +166,92 @@ export default async function DashboardPage() {
       .select('*', { count: 'exact', head: true })
       .eq('customer_id', customer.id)
 
-    const available =
-      Math.floor(paidOmzet / customer.bonus_threshold) -
-      (grantedCount ?? 0)
+    const available = calculateBonusAvailable(
+      paidOmzet,
+      customer.bonus_threshold,
+      grantedCount ?? 0
+    )
 
     if (available > 0) {
-      eligibleCustomers.push({ nama: customer.nama, available })
+      eligibleCustomers.push({
+        id: customer.id,
+        nama: customer.nama,
+        available,
+      })
     }
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+      {/* Greeting */}
+      <h1 className="text-[24px] md:text-[28px] font-bold text-text">
+        {getGreeting()}! {'\uD83D\uDC4B'}
+      </h1>
+
+      {/* Bonus Alerts */}
       {eligibleCustomers.length > 0 && (
-        <div className="bg-bonus/10 border border-bonus/30 rounded-xl px-5 py-3.5">
-          <p className="text-sm text-bonus font-medium">
-            Bonus tersedia:{' '}
-            {eligibleCustomers.map((c, i) => (
-              <span key={i}>
-                {i > 0 && ', '}
-                {c.nama} ({c.available} bonus)
-              </span>
-            ))}
-          </p>
+        <div className="space-y-3">
+          {eligibleCustomers.map((c) => (
+            <BonusAlert
+              key={c.id}
+              customerId={c.id}
+              customerName={c.nama}
+              available={c.available}
+            />
+          ))}
         </div>
       )}
 
-      <div className="grid grid-cols-4 gap-4">
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <StatCard
-          title="Total Omzet"
+          icon={'\uD83D\uDCB0'}
+          title="Omzet Bulan Ini"
           value={formatRupiah(totalOmzet)}
-          subtitle="Bulan Ini"
+          subtitle={`${lunasTx.length} transaksi lunas`}
+          colorClass="text-accent"
         />
         <StatCard
-          title="Total Laba"
+          icon={'\uD83D\uDCC8'}
+          title="Laba Bulan Ini"
           value={formatRupiah(totalLaba)}
-          subtitle="Bulan Ini"
+          subtitle={`${lunasTx.length} transaksi`}
+          colorClass="text-blue"
         />
         <StatCard
-          title="Piutang"
+          icon={'\uD83D\uDCC4'}
+          title="Piutang Outstanding"
           value={formatRupiah(totalPiutang)}
-          subtitle="Outstanding"
+          subtitle={`${piutangTx.length} transaksi`}
+          colorClass="text-piutang"
         />
         <StatCard
-          title="Dibayar"
+          icon={'\u2705'}
+          title="Sudah Dibayar"
           value={formatRupiah(totalDibayar)}
-          subtitle="Bulan Ini"
+          subtitle="Bulan ini"
+          colorClass="text-lunas"
         />
       </div>
 
-      <div className="bg-surface border border-border rounded-xl p-5">
-        <h2 className="text-base font-medium text-text mb-4">
+      {/* Recent Transactions */}
+      <div className="bg-surface border border-border rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+        <h2 className="text-[18px] md:text-[22px] font-semibold text-text mb-4">
           Transaksi Terbaru
         </h2>
 
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="text-left text-xs text-text-muted uppercase tracking-wider font-mono">
+              <tr className="text-left text-[13px] text-text-secondary uppercase tracking-wider font-semibold">
                 <th className="pb-3 pr-4 font-medium">Tanggal</th>
                 <th className="pb-3 pr-4 font-medium">Nomor Bon</th>
-                <th className="pb-3 pr-4 font-medium">Customer</th>
+                <th className="pb-3 pr-4 font-medium">Pelanggan</th>
                 <th className="pb-3 pr-4 font-medium">Status</th>
                 <th className="pb-3 text-right font-medium">Total</th>
               </tr>
             </thead>
-            <tbody className="text-sm">
+            <tbody className="text-[15px]">
               {recentTx.map((tx) => {
                 const lineOmzet = tx.transaction_lines.reduce(
                   (s, l) => s + (l.omzet ?? 0),
@@ -230,19 +262,19 @@ export default async function DashboardPage() {
                 let badge
                 if (tx.is_bonus) {
                   badge = (
-                    <span className="inline-block bg-bonus/20 text-bonus border border-bonus/30 px-2 py-0.5 rounded text-xs font-mono">
+                    <span className="inline-block bg-bonus-bg text-bonus border border-bonus/30 rounded-full px-3.5 py-1.5 text-[13px] font-semibold">
                       Bonus
                     </span>
                   )
                 } else if (tx.status === 'Lunas') {
                   badge = (
-                    <span className="inline-block bg-lunas/20 text-lunas border border-lunas/30 px-2 py-0.5 rounded text-xs font-mono">
+                    <span className="inline-block bg-lunas-bg text-lunas border border-lunas/30 rounded-full px-3.5 py-1.5 text-[13px] font-semibold">
                       Lunas
                     </span>
                   )
                 } else {
                   badge = (
-                    <span className="inline-block bg-piutang/20 text-piutang border border-piutang/30 px-2 py-0.5 rounded text-xs font-mono">
+                    <span className="inline-block bg-piutang-bg text-piutang border border-piutang/30 rounded-full px-3.5 py-1.5 text-[13px] font-semibold">
                       Piutang
                     </span>
                   )
@@ -251,19 +283,20 @@ export default async function DashboardPage() {
                 return (
                   <tr
                     key={tx.id}
-                    className="border-t border-border hover:bg-surface-2/50 transition-colors"
+                    className="border-b border-border hover:bg-surface-2/50 transition-colors"
+                    style={{ height: '64px' }}
                   >
-                    <td className="py-3 pr-4 text-text-secondary whitespace-nowrap">
+                    <td className="pr-4 text-text-secondary whitespace-nowrap">
                       {formatDate(tx.tanggal)}
                     </td>
-                    <td className="py-3 pr-4 font-mono text-text">
+                    <td className="pr-4 font-mono text-text whitespace-nowrap">
                       {tx.nomor_bon}
                     </td>
-                    <td className="py-3 pr-4 text-text">
+                    <td className="pr-4 text-text">
                       {tx.customers?.nama ?? '-'}
                     </td>
-                    <td className="py-3 pr-4">{badge}</td>
-                    <td className="py-3 text-right font-mono text-text whitespace-nowrap">
+                    <td className="pr-4">{badge}</td>
+                    <td className="text-right font-mono text-text font-medium whitespace-nowrap">
                       {formatRupiah(total)}
                     </td>
                   </tr>
@@ -273,7 +306,7 @@ export default async function DashboardPage() {
                 <tr>
                   <td
                     colSpan={5}
-                    className="py-12 text-center text-text-muted text-sm"
+                    className="py-12 text-center text-text-muted text-[15px]"
                   >
                     Belum ada transaksi
                   </td>

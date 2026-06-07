@@ -1,10 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { cascadingDiscount, lineOmzet, lineLaba } from '@/lib/calculations'
 import { formatRupiah } from '@/lib/utils'
+import {
+  getCustomerPaidOmzet,
+  getCustomerBonusGranted,
+  calculateBonusAvailable,
+} from '@/lib/bonus'
 
 interface LineItemData {
   product_id: string
@@ -24,6 +29,13 @@ interface DiscountStepRow {
   percentage: number
 }
 
+interface BonusInfo {
+  customerNama: string
+  paidOmzet: number
+  granted: number
+  available: number
+}
+
 interface BonFormProps {
   initialData?: {
     id: string
@@ -36,6 +48,8 @@ interface BonFormProps {
     status: string
     lines: Omit<LineItemData, 'nama'>[]
   }
+  defaultCustomerId?: string
+  defaultIsBonus?: boolean
 }
 
 function todayStr() {
@@ -63,26 +77,36 @@ function formatDiscountSteps(
   return `${pct} (efektif ${eff}%)`
 }
 
-export default function BonForm({ initialData }: BonFormProps) {
+export default function BonForm({
+  initialData,
+  defaultCustomerId,
+  defaultIsBonus,
+}: BonFormProps) {
   const router = useRouter()
   const isEdit = !!initialData
 
   const [tanggal, setTanggal] = useState(initialData?.tanggal ?? todayStr())
   const [nomorBon, setNomorBon] = useState(initialData?.nomor_bon ?? '')
   const [customerId, setCustomerId] = useState(
-    initialData?.customer_id ?? ''
+    initialData?.customer_id ?? defaultCustomerId ?? ''
   )
   const [deskripsi, setDeskripsi] = useState(initialData?.deskripsi ?? '')
   const [ongkir, setOngkir] = useState(
     initialData?.ongkir != null ? String(initialData.ongkir) : '0'
   )
-  const [isBonus, setIsBonus] = useState(initialData?.is_bonus ?? false)
+  const [isBonus, setIsBonus] = useState(
+    initialData?.is_bonus ?? defaultIsBonus ?? false
+  )
   const [lines, setLines] = useState<LineItemData[]>(
     initialData?.lines.map((l, i) => ({
       ...l,
       nama: `Item ${i + 1}`,
     })) ?? []
   )
+  const [bonusInfo, setBonusInfo] = useState<BonusInfo | null>(null)
+  const [bonusClaimAmount, setBonusClaimAmount] = useState(1)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [confirming, setConfirming] = useState(false)
   const [customers, setCustomers] = useState<
     { id: string; nama: string }[]
   >([])
@@ -96,9 +120,15 @@ export default function BonForm({ initialData }: BonFormProps) {
     }[]
   >([])
   const [discountSteps, setDiscountSteps] = useState<DiscountStepRow[]>([])
-  const [error, setError] = useState<string | null>(null)
+
+  const [validationErrors, setValidationErrors] = useState<string[]>([])
+  const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({})
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+
+  const nomorBonRef = useRef<HTMLInputElement>(null)
+  const customerRef = useRef<HTMLSelectElement>(null)
+  const firstErrorLineRef = useRef<number | null>(null)
 
   const numOngkir = parseInt(ongkir) || 0
 
@@ -176,6 +206,51 @@ export default function BonForm({ initialData }: BonFormProps) {
     }
   }, [customerId])
 
+  // Load bonus info when in bonus mode
+  useEffect(() => {
+    if (!isBonus || !customerId) return
+
+    let ignore = false
+
+    async function load() {
+      const supabase = createClient()
+
+      const { data: cust } = await supabase
+        .from('customers')
+        .select('nama, bonus_threshold')
+        .eq('id', customerId)
+        .single()
+
+      if (ignore || !cust) return
+
+      const paidOmzet = await getCustomerPaidOmzet(customerId)
+      const granted = await getCustomerBonusGranted(customerId)
+      const available = calculateBonusAvailable(
+        paidOmzet,
+        cust.bonus_threshold,
+        granted
+      )
+
+      if (!ignore) {
+        setBonusInfo({
+          customerNama: cust.nama,
+          paidOmzet,
+          granted,
+          available,
+        })
+        if (available < 1) {
+          // bonus info display already shows available = 0
+        }
+      }
+    }
+
+    load()
+
+    return () => {
+      ignore = true
+    }
+  }, [customerId, isBonus])
+
   // Recalculate lines when discount steps or isBonus changes
   useEffect(() => {
     triggerRecalculate(discountSteps, isBonus)
@@ -206,7 +281,7 @@ export default function BonForm({ initialData }: BonFormProps) {
 
   function addLine() {
     if (!customerId) {
-      setError('Pilih customer dulu sebelum menambah produk.')
+      setValidationErrors(['Pilih customer dulu sebelum menambah produk.'])
       return
     }
     setLines((prev) => [
@@ -253,7 +328,7 @@ export default function BonForm({ initialData }: BonFormProps) {
       }
       return updated
     })
-    setError(null)
+    setValidationErrors([])
   }
 
   function updateLineQty(index: number, raw: string) {
@@ -284,32 +359,72 @@ export default function BonForm({ initialData }: BonFormProps) {
   const totalLaba = lines.reduce((s, l) => s + l.laba, 0)
   const totalTagihan = totalOmzet + numOngkir
 
-  async function handleSubmit() {
-    setError(null)
+  function handleSubmitClick() {
+    setValidationErrors([])
+    setFieldErrors({})
+    const errors: string[] = []
+    const fields: Record<string, boolean> = {}
+    let firstLine: number | null = null
 
     if (!nomorBon.trim()) {
-      setError('Nomor Bon wajib diisi.')
-      return
+      errors.push('Nomor Bon harus diisi')
+      fields.nomorBon = true
     }
+
     if (!customerId) {
-      setError('Customer wajib dipilih.')
-      return
+      errors.push('Customer harus dipilih')
+      fields.customer = true
     }
+
     if (lines.length === 0) {
-      setError('Minimal satu produk harus ditambahkan.')
-      return
+      errors.push('Minimal harus ada 1 produk')
     }
-    for (const line of lines) {
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
       if (!line.product_id) {
-        setError('Semua baris produk harus diisi.')
-        return
+        errors.push(`Produk di baris ke-${i + 1} belum dipilih`)
+        fields[`line_${i}_product`] = true
+        if (firstLine === null) firstLine = i
       }
       if (line.qty < 1) {
-        setError('Quantity minimal 1 untuk semua baris.')
-        return
+        errors.push(`Qty di baris ke-${i + 1} harus lebih dari 0`)
+        fields[`line_${i}_qty`] = true
+        if (firstLine === null) firstLine = i
       }
     }
 
+    if (isBonus) {
+      if (!bonusInfo) {
+        errors.push('Informasi bonus belum dimuat, tunggu sebentar')
+      } else {
+        if (bonusClaimAmount < 1) {
+          errors.push('Jumlah bonus minimal 1')
+        }
+        if (bonusClaimAmount > bonusInfo.available) {
+          errors.push(`Jumlah bonus melebihi yang tersedia (max ${bonusInfo.available})`)
+        }
+      }
+    }
+
+    if (errors.length > 0) {
+      setValidationErrors(errors)
+      setFieldErrors(fields)
+      firstErrorLineRef.current = firstLine
+      return
+    }
+
+    setFieldErrors({})
+    setValidationErrors([])
+
+    if (isBonus) {
+      setShowConfirm(true)
+    } else {
+      performSubmit()
+    }
+  }
+
+  async function performSubmit() {
     setSaving(true)
     const supabase = createClient()
 
@@ -322,15 +437,16 @@ export default function BonForm({ initialData }: BonFormProps) {
 
       if (existing) {
         if (!isEdit || (isEdit && existing.id !== initialData!.id)) {
-          setError(
-            `Nomor Bon "${nomorBon.trim()}" sudah dipakai, gunakan nomor lain.`
-          )
+          setValidationErrors([
+            `Nomor Bon "${nomorBon.trim()}" sudah dipakai, gunakan nomor lain.`,
+          ])
           setSaving(false)
           return
         }
       }
 
       let txId: string
+      const txStatus = isBonus ? 'Lunas' : 'Piutang'
 
       if (isEdit) {
         txId = initialData!.id
@@ -361,7 +477,7 @@ export default function BonForm({ initialData }: BonFormProps) {
             deskripsi: deskripsi || null,
             ongkir: numOngkir,
             is_bonus: isBonus,
-            status: 'Piutang',
+            status: txStatus,
           })
           .select('id')
           .single()
@@ -389,37 +505,92 @@ export default function BonForm({ initialData }: BonFormProps) {
         if (le) throw le
       }
 
+      if (isBonus && bonusInfo) {
+        const { error: be } = await supabase.from('bonus_grants').insert({
+          customer_id: customerId,
+          transaction_id: txId,
+          jumlah: bonusClaimAmount,
+        })
+        if (be) throw be
+      }
+
       setSaved(true)
-      setTimeout(() => router.push('/transactions'), 800)
+      setShowConfirm(false)
+
+      const redirectUrl = isBonus
+        ? `/customers/${customerId}`
+        : '/transactions'
+      setTimeout(() => router.push(redirectUrl), 800)
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : 'Gagal menyimpan transaksi.'
-      )
+      setValidationErrors([
+        err instanceof Error ? err.message : 'Gagal menyimpan transaksi.',
+      ])
     } finally {
       setSaving(false)
+      setConfirming(false)
     }
+  }
+
+  async function handleConfirm() {
+    setConfirming(true)
+    await performSubmit()
   }
 
   return (
     <div className="space-y-6 max-w-3xl">
       {saved && (
-        <div className="bg-emerald-900/30 border border-emerald-700 rounded-lg px-5 py-3.5 text-sm text-emerald-400 font-medium text-center">
-          Transaksi berhasil disimpan ✓
+        <div className="bg-accent/10 border border-accent/30 rounded-xl px-5 py-4 text-[15px] text-accent font-semibold text-center">
+          {isBonus
+            ? `Bon Bonus berhasil disimpan! ${bonusClaimAmount} bonus telah diklaim.`
+            : 'Transaksi berhasil disimpan \u2713'}
         </div>
       )}
 
-      {error && (
-        <div className="bg-red-950/50 border border-red-800 rounded-lg px-5 py-3.5 text-sm text-red-400">
-          {error}
+      {validationErrors.length > 0 && (
+        <div className="fixed inset-0 bg-black/60 flex items-end md:items-center justify-center z-50" onClick={() => { setValidationErrors([]); setFieldErrors({}) }}>
+          <div className="bg-surface border border-border rounded-t-2xl md:rounded-2xl p-6 md:p-8 w-full md:max-w-md mx-0 md:mx-4 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-text-muted rounded-full mx-auto mb-4 md:hidden" />
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">&#x26A0;&#xFE0F;</span>
+              <h3 className="text-[22px] font-bold text-text">Form Belum Lengkap</h3>
+            </div>
+            <ul className="space-y-2">
+              {validationErrors.map((msg, i) => (
+                <li key={i} className="text-[15px] text-text-secondary flex items-start gap-2">
+                  <span className="text-danger shrink-0 mt-0.5">&bull;</span>
+                  {msg}
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => {
+                setValidationErrors([])
+                setFieldErrors({})
+                if (fieldErrors.nomorBon && nomorBonRef.current) {
+                  nomorBonRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  nomorBonRef.current.focus()
+                } else if (fieldErrors.customer && customerRef.current) {
+                  customerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  customerRef.current.focus()
+                } else if (firstErrorLineRef.current !== null) {
+                  const el = document.getElementById(`line-product-${firstErrorLineRef.current}`)
+                  el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                }
+              }}
+              className="bg-accent hover:bg-[#256F28] text-white font-semibold rounded-xl py-3 text-[15px] w-full transition-colors"
+            >
+              OK, Saya Perbaiki
+            </button>
+          </div>
         </div>
       )}
 
-      <div className="bg-surface border border-border rounded-xl p-5 space-y-5">
-        <div className="grid grid-cols-2 gap-4">
+      <div className="bg-surface border border-border rounded-2xl p-4 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] space-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
           <div>
             <label
               htmlFor="tanggal"
-              className="block text-sm font-medium text-text-secondary mb-1.5"
+              className="block text-[15px] font-semibold text-text mb-2"
             >
               Tanggal
             </label>
@@ -429,23 +600,26 @@ export default function BonForm({ initialData }: BonFormProps) {
               required
               value={tanggal}
               onChange={(e) => setTanggal(e.target.value)}
-              className="w-full bg-surface-2 border border-border rounded-lg px-4 py-3 text-[15px] text-text outline-none focus:border-accent transition-colors"
+              className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-[16px] text-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors h-[52px]"
             />
           </div>
           <div>
             <label
               htmlFor="nomorBon"
-              className="block text-sm font-medium text-text-secondary mb-1.5"
+              className="block text-[15px] font-semibold text-text mb-2"
             >
               Nomor Bon
             </label>
             <input
+              ref={nomorBonRef}
               id="nomorBon"
               type="text"
               required
               value={nomorBon}
-              onChange={(e) => setNomorBon(e.target.value)}
-              className="w-full bg-surface-2 border border-border rounded-lg px-4 py-3 text-[15px] text-text font-mono placeholder-text-muted outline-none focus:border-accent transition-colors"
+              onChange={(e) => { setNomorBon(e.target.value); setFieldErrors((prev) => ({ ...prev, nomorBon: false })) }}
+              className={`w-full bg-surface-2 border rounded-xl px-4 py-3.5 text-[16px] text-text font-mono placeholder-text-muted outline-none focus:ring-2 transition-colors h-[52px] ${
+                fieldErrors.nomorBon ? 'border-red-500 focus:border-red-400 focus:ring-red-500/20' : 'border-border focus:border-accent focus:ring-accent/20'
+              }`}
               placeholder="Contoh: BON-001"
             />
           </div>
@@ -454,21 +628,25 @@ export default function BonForm({ initialData }: BonFormProps) {
         <div>
           <label
             htmlFor="customer"
-            className="block text-sm font-medium text-text-secondary mb-1.5"
+            className="block text-[15px] font-semibold text-text mb-2"
           >
-            Customer
+            Pelanggan
           </label>
           <select
+            ref={customerRef}
             id="customer"
             required
             value={customerId}
             onChange={(e) => {
               setCustomerId(e.target.value)
-              setError(null)
+              setFieldErrors((prev) => ({ ...prev, customer: false }))
+
             }}
-            className="w-full bg-surface-2 border border-border rounded-lg px-4 py-3 text-[15px] text-text outline-none focus:border-accent transition-colors"
+            className={`w-full bg-surface-2 border rounded-xl px-4 py-3.5 text-[16px] text-text outline-none focus:ring-2 transition-colors h-[52px] ${
+              fieldErrors.customer ? 'border-red-500 focus:border-red-400 focus:ring-red-500/20' : 'border-border focus:border-accent focus:ring-accent/20'
+            }`}
           >
-            <option value="">Pilih customer...</option>
+            <option value="">Pilih pelanggan...</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.nama}
@@ -480,7 +658,7 @@ export default function BonForm({ initialData }: BonFormProps) {
         <div>
           <label
             htmlFor="deskripsi"
-            className="block text-sm font-medium text-text-secondary mb-1.5"
+            className="block text-[15px] font-semibold text-text mb-2"
           >
             Deskripsi (opsional)
           </label>
@@ -489,18 +667,18 @@ export default function BonForm({ initialData }: BonFormProps) {
             value={deskripsi}
             onChange={(e) => setDeskripsi(e.target.value)}
             rows={2}
-            className="w-full bg-surface-2 border border-border rounded-lg px-4 py-3 text-[15px] text-text placeholder-text-muted outline-none focus:border-accent transition-colors resize-none"
+            className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-[16px] text-text placeholder-text-muted outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors resize-none min-h-[100px]"
             placeholder="Catatan tambahan..."
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
           <div>
             <label
               htmlFor="ongkir"
-              className="block text-sm font-medium text-text-secondary mb-1.5"
+              className="block text-[15px] font-semibold text-text mb-2"
             >
-              Ongkir / Biaya Kirim
+              Ongkir
             </label>
             <input
               id="ongkir"
@@ -512,7 +690,7 @@ export default function BonForm({ initialData }: BonFormProps) {
               onBlur={() => {
                 if (ongkir === '') setOngkir('0')
               }}
-              className="w-full bg-surface-2 border border-border rounded-lg px-4 py-3 text-[15px] text-text font-mono outline-none focus:border-accent transition-colors"
+              className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-[16px] text-text font-mono outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors h-[52px]"
             />
           </div>
           <div className="flex items-end pb-3">
@@ -525,7 +703,7 @@ export default function BonForm({ initialData }: BonFormProps) {
                   setIsBonus(checked)
                   triggerRecalculate(discountSteps, checked)
                 }}
-                className="accent-emerald-500 w-5 h-5"
+                className="accent-accent w-5 h-5"
               />
               <span className="text-[15px] text-text">
                 Ini adalah Bon Bonus
@@ -535,13 +713,76 @@ export default function BonForm({ initialData }: BonFormProps) {
         </div>
       </div>
 
-      <div className="bg-surface border border-border rounded-xl p-5">
+      {isBonus && bonusInfo && (
+        <div className="bg-bonus-bg border border-bonus/30 rounded-xl px-5 py-4 space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">&#x1F389;</span>
+            <p className="text-sm text-bonus font-medium">
+              Bon ini adalah bonus untuk <strong>{bonusInfo.customerNama}</strong>
+            </p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div className="bg-surface-2 rounded-xl px-4 py-3 text-[15px]">
+              <p className="text-text-muted text-xs">Akumulasi Omzet</p>
+              <p className="font-mono text-text font-medium mt-0.5">
+                {formatRupiah(bonusInfo.paidOmzet)}
+              </p>
+            </div>
+            <div className="bg-surface-2 rounded-xl px-4 py-3 text-[15px]">
+              <p className="text-text-muted text-xs">Bonus tersedia</p>
+              <p className="font-mono text-bonus font-medium mt-0.5">
+                {bonusInfo.available}
+              </p>
+            </div>
+            <div className="bg-surface-2 rounded-xl px-4 py-3 text-[15px]">
+              <p className="text-text-muted text-xs">Sudah Diklaim</p>
+              <p className="font-mono text-text font-medium mt-0.5">
+                {bonusInfo.granted}
+              </p>
+            </div>
+          </div>
+
+          {bonusInfo.available > 0 ? (
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
+              <label className="text-sm text-text-secondary shrink-0">
+                Jumlah bonus yang diklaim:
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={bonusClaimAmount || ''}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, '')
+                  setBonusClaimAmount(v === '' ? 0 : parseInt(v))
+                }}
+                onBlur={() => {
+                  if (bonusClaimAmount < 1) setBonusClaimAmount(1)
+                  if (bonusClaimAmount > bonusInfo.available)
+                    setBonusClaimAmount(bonusInfo.available)
+                }}
+                className="w-20 bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-[15px] text-text font-mono text-center outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors"
+              />
+              <span className="text-xs text-text-muted">
+                (max {bonusInfo.available})
+              </span>
+            </div>
+          ) : (
+            <div className="bg-danger/10 border border-danger/30 rounded-xl px-4 py-3 text-sm text-danger">
+              {bonusInfo.customerNama} tidak memiliki bonus yang tersedia saat ini.
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="bg-surface border border-border rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-medium text-text">Item Produk</h2>
+          <h2 className="text-[15px] font-semibold text-text">Item Produk</h2>
           <button
             type="button"
             onClick={addLine}
-            className="bg-emerald-500 hover:bg-emerald-400 text-white font-medium rounded-lg px-4 py-2 text-[15px] transition-colors"
+            className="bg-surface-2 hover:bg-border text-text font-semibold rounded-xl px-5 py-3 text-[15px] w-full md:w-auto transition-colors"
           >
             + Tambah Produk
           </button>
@@ -559,19 +800,16 @@ export default function BonForm({ initialData }: BonFormProps) {
             Belum ada produk. Klik &quot;+ Tambah Produk&quot; untuk mulai.
           </p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto touch-scroll">
+            <p className="text-[13px] text-text-secondary text-center md:hidden mb-1 animate-pulse">← Geser untuk detail lengkap →</p>
             <table className="w-full">
               <thead>
-                <tr className="text-left text-xs text-text-muted uppercase tracking-wider font-mono">
+                <tr className="text-[13px] uppercase tracking-wider font-semibold text-text-secondary bg-surface-2">
                   <th className="pb-3 pr-3 font-medium">Produk</th>
                   <th className="pb-3 pr-3 font-medium">Tipe</th>
                   <th className="pb-3 pr-3 text-right font-medium">Qty</th>
-                  <th className="pb-3 pr-3 text-right font-medium">
-                    Harga Base
-                  </th>
-                  <th className="pb-3 pr-3 text-right font-medium">
-                    Harga Diskon
-                  </th>
+                  <th className="pb-3 pr-3 text-right font-medium">Harga</th>
+                  <th className="pb-3 pr-3 text-right font-medium">Diskon</th>
                   <th className="pb-3 pr-3 text-right font-medium">Omzet</th>
                   <th className="pb-3 font-medium"></th>
                 </tr>
@@ -587,16 +825,20 @@ export default function BonForm({ initialData }: BonFormProps) {
                       : 0
 
                   return (
-                    <tr key={i} className="border-t border-border align-top">
+                    <tr key={i} className="border-b border-border align-top">
                       <td className="py-3 pr-3">
                         <select
+                          id={`line-product-${i}`}
                           value={line.product_id}
-                          onChange={(e) =>
+                          onChange={(e) => {
                             updateLineProduct(i, e.target.value)
-                          }
-                          className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-[15px] text-text outline-none focus:border-accent transition-colors"
+                            setFieldErrors((prev) => ({ ...prev, [`line_${i}_product`]: false }))
+                          }}
+                          className={`w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-[15px] text-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors ${
+                            fieldErrors[`line_${i}_product`] ? 'border-red-500 focus:border-red-400' : 'border-border focus:border-accent'
+                          }`}
                         >
-                          <option value="">Pilih produk...</option>
+                          <option value="">Pilih produk</option>
                           {products.map((p) => (
                             <option key={p.id} value={p.id}>
                               {p.nama} ({p.tipe})
@@ -621,11 +863,14 @@ export default function BonForm({ initialData }: BonFormProps) {
                           inputMode="numeric"
                           pattern="[0-9]*"
                           value={line.qty || ''}
-                          onChange={(e) =>
+                          onChange={(e) => {
                             updateLineQty(i, e.target.value)
-                          }
+                            setFieldErrors((prev) => ({ ...prev, [`line_${i}_qty`]: false }))
+                          }}
                           onBlur={() => handleQtyBlur(i)}
-                          className="w-16 bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-[15px] text-text font-mono text-right outline-none focus:border-accent transition-colors"
+                          className={`w-16 bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-[15px] text-text font-mono text-right outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors ${
+                            fieldErrors[`line_${i}_qty`] ? 'border-red-500 focus:border-red-400' : 'border-border focus:border-accent'
+                          }`}
                         />
                       </td>
                       <td className="py-3 pr-3 text-right font-mono text-text">
@@ -656,9 +901,9 @@ export default function BonForm({ initialData }: BonFormProps) {
                         <button
                           type="button"
                           onClick={() => removeLine(i)}
-                          className="text-text-muted hover:text-danger text-lg transition-colors px-1"
+                          className="text-danger hover:bg-danger-bg font-medium rounded-lg px-3 py-1.5 text-[13px] transition-colors"
                         >
-                          \u00d7
+                          Hapus
                         </button>
                       </td>
                     </tr>
@@ -670,7 +915,7 @@ export default function BonForm({ initialData }: BonFormProps) {
         )}
       </div>
 
-      <div className="bg-surface border border-border rounded-xl p-5 space-y-2">
+      <div className="bg-surface-2 rounded-xl p-5 space-y-2">
         <div className="flex justify-between text-[15px]">
           <span className="text-text-secondary">Total Omzet</span>
           <span className="font-mono text-text font-medium">
@@ -697,12 +942,12 @@ export default function BonForm({ initialData }: BonFormProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-4 pt-2">
+      <div className="flex flex-col md:flex-row gap-3 md:gap-4 pt-2">
         <button
           type="button"
-          onClick={handleSubmit}
+          onClick={handleSubmitClick}
           disabled={saving || saved}
-          className="bg-emerald-500 hover:bg-emerald-400 text-white font-medium rounded-lg px-6 py-3 text-[15px] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="bg-accent hover:bg-[#256F28] text-white font-semibold rounded-xl px-8 py-3 text-[15px] h-[48px] w-full md:w-auto disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {saving
             ? 'Menyimpan...'
@@ -710,16 +955,59 @@ export default function BonForm({ initialData }: BonFormProps) {
               ? 'Tersimpan \u2713'
               : isEdit
                 ? 'Simpan Perubahan'
-                : 'Buat Bon'}
+                : isBonus
+                  ? 'Buat Bon Bonus'
+                  : 'Buat Bon'}
         </button>
         <button
           type="button"
           onClick={() => router.push('/transactions')}
-          className="text-text-secondary hover:text-text text-[15px] transition-colors"
+          className="bg-surface-2 hover:bg-border text-text font-semibold rounded-xl px-6 py-3 text-[15px] h-[48px] w-full md:w-auto transition-colors"
         >
-          \u2190 Kembali
+          ← Kembali
         </button>
       </div>
+
+      {showConfirm && bonusInfo && (
+        <div className="fixed inset-0 bg-black/60 flex items-end md:items-center justify-center z-50">
+          <div className="bg-surface border border-border rounded-t-2xl md:rounded-2xl p-6 md:p-8 w-full md:max-w-md mx-0 md:mx-4 max-h-[85vh] overflow-y-auto">
+            <div className="w-10 h-1 bg-text-muted rounded-full mx-auto mb-4 md:hidden" />
+            <h3 className="text-[22px] font-bold text-text">
+              Konfirmasi Pemberian Bonus
+            </h3>
+            <p className="text-[15px] text-text-secondary">
+              Yakin ingin memberikan {bonusClaimAmount} bonus untuk{' '}
+              <strong className="text-text">{bonusInfo.customerNama}</strong>?
+            </p>
+            {bonusClaimAmount > 1 && (
+              <p className="text-sm text-text-muted">
+                {bonusClaimAmount} bonus akan dicatat sekaligus dalam 1 transaksi.
+              </p>
+            )}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowConfirm(false)
+                  setConfirming(false)
+                }}
+                disabled={confirming}
+                className="flex-1 bg-surface-2 hover:bg-border text-text font-semibold rounded-xl py-3 text-[15px] h-[52px] disabled:opacity-50 transition-colors"
+              >
+                Kembali
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirm}
+                disabled={confirming}
+                className="flex-1 bg-accent hover:bg-[#256F28] text-white font-semibold rounded-xl py-3 text-[15px] h-[52px] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {confirming ? 'Menyimpan...' : 'Simpan'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

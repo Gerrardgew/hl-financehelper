@@ -48,14 +48,14 @@ export default function EditCustomerPage() {
 
   if (loading) {
     return (
-      <div className="p-6 text-center text-text-muted text-sm">Memuat...</div>
+      <div className="p-6 text-center text-text-muted text-[17px]">Memuat...</div>
     )
   }
 
   if (!data) {
     return (
-      <div className="p-6 text-text-muted text-sm">
-        Customer tidak ditemukan.
+      <div className="p-6 text-text-muted text-[17px]">
+        Pelanggan tidak ditemukan.
       </div>
     )
   }
@@ -71,19 +71,21 @@ export default function EditCustomerPage() {
     .map((s) => ({ percentage: s.percentage }))
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-lg font-semibold text-text">
-        Edit Customer: {data.nama}
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+      <h1 className="text-[22px] md:text-[28px] font-bold text-text">
+        Ubah Pelanggan: {data.nama}
       </h1>
-      <CustomerForm
-        customer={{
-          id: data.id,
-          nama: data.nama,
-          bonus_threshold: data.bonus_threshold,
-        }}
-        stepsLM={stepsLM}
-        stepsBR={stepsBR}
-      />
+      <div className="max-w-[720px]">
+        <CustomerForm
+          customer={{
+            id: data.id,
+            nama: data.nama,
+            bonus_threshold: data.bonus_threshold,
+          }}
+          stepsLM={stepsLM}
+          stepsBR={stepsBR}
+        />
+      </div>
     </div>
   )
 }

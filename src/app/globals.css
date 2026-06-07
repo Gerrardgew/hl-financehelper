@@ -1,27 +1,169 @@
 @import "tailwindcss";
 
-@theme inline {
-  --color-bg: #0f1117;
-  --color-surface: #1a1d27;
-  --color-surface-2: #222535;
-  --color-border: #2e3347;
-  --color-text: #f0f2f8;
-  --color-text-secondary: #8b90a7;
-  --color-text-muted: #555b72;
-  --color-accent: #10b981;
-  --color-accent-dim: #064e3b;
-  --color-piutang: #f59e0b;
-  --color-lunas: #10b981;
-  --color-bonus: #6366f1;
-  --color-danger: #ef4444;
-  --color-danger-dim: #450a0a;
+:root {
+  --bg: #F8F9FA;
+  --surface: #FFFFFF;
+  --surface-2: #F1F3F5;
+  --border: #DEE2E6;
+  --text: #212529;
+  --text-secondary: #6C757D;
+  --text-muted: #ADB5BD;
+  --accent: #2E7D32;
+  --accent-light: #E8F5E9;
+  --piutang: #E65100;
+  --piutang-bg: #FFF3E0;
+  --lunas: #2E7D32;
+  --lunas-bg: #E8F5E9;
+  --bonus: #4527A0;
+  --bonus-bg: #EDE7F6;
+  --danger: #C62828;
+  --danger-bg: #FFEBEE;
+  --blue: #1565C0;
+  --blue-bg: #E3F2FD;
+  --purple: #6A1B9A;
+  --purple-bg: #F3E5F5;
+}
 
-  --font-sans: var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-dm-mono), ui-monospace, monospace;
+.dark {
+  --bg: #1A1A2E;
+  --surface: #16213E;
+  --surface-2: #0F3460;
+  --border: #2A2A5A;
+  --text: #E8E8F0;
+  --text-secondary: #A0A0C0;
+  --text-muted: #606080;
+  --accent: #4CAF50;
+  --accent-light: #1B3A1C;
+  --piutang: #FF8F00;
+  --piutang-bg: #2A1F00;
+  --lunas: #4CAF50;
+  --lunas-bg: #1B3A1C;
+  --bonus: #9C27B0;
+  --bonus-bg: #2A1A3A;
+  --danger: #EF5350;
+  --danger-bg: #3A1A1A;
+  --blue: #42A5F5;
+  --blue-bg: #0D2137;
+  --purple: #CE93D8;
+  --purple-bg: #1A0F2E;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-light: var(--accent-light);
+  --color-piutang: var(--piutang);
+  --color-piutang-bg: var(--piutang-bg);
+  --color-lunas: var(--lunas);
+  --color-lunas-bg: var(--lunas-bg);
+  --color-bonus: var(--bonus);
+  --color-bonus-bg: var(--bonus-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-blue: var(--blue);
+  --color-blue-bg: var(--blue-bg);
+  --color-purple: var(--purple);
+  --color-purple-bg: var(--purple-bg);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'Cascadia Code', monospace;
 }
 
 body {
-  background: var(--color-bg);
-  color: var(--color-text);
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+@media (max-width: 767px) {
+  body {
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  body {
+    font-size: 16px;
+  }
+}
+
+/* Safe area padding for iOS */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .safe-pt {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-pl {
+    padding-left: env(safe-area-inset-left);
+  }
+  .safe-pr {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Touch scrolling */
+.scroll-hint {
+  position: relative;
+}
+.scroll-hint::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  background: linear-gradient(to right, transparent, var(--surface));
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.scroll-hint.can-scroll::after {
+  opacity: 1;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 3px;
+}
+
+/* Input autofill override */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text);
+  -webkit-box-shadow: 0 0 0px 1000px var(--surface-2) inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* iOS momentum scrolling */
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Hide scrollbar on mobile tables */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

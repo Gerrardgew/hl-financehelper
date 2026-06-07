@@ -81,23 +81,22 @@ export default function TransactionDetailPage() {
 
   if (loading) {
     return (
-      <div className="p-6 text-center text-text-muted text-[15px]">
-        Memuat...
+      <div className="flex items-center justify-center py-20">
+        <p className="text-[15px] text-text-muted">Memuat...</p>
       </div>
     )
   }
 
   if (!tx) {
     return (
-      <div className="p-6 space-y-4">
-        <p className="text-text-muted text-[15px]">
-          Transaksi tidak ditemukan.
-        </p>
+      <div className="flex flex-col items-center justify-center py-20 space-y-4">
+        <span className="text-5xl">📄</span>
+        <p className="text-[15px] text-text-muted">Transaksi tidak ditemukan.</p>
         <Link
           href="/transactions"
-          className="text-accent hover:text-emerald-400 text-[15px]"
+          className="text-[13px] text-text-muted hover:text-text transition-colors"
         >
-          ← Kembali ke Transaksi
+          Kembali ke daftar transaksi
         </Link>
       </div>
     )
@@ -116,105 +115,98 @@ export default function TransactionDetailPage() {
   let statusBadge
   if (tx.is_bonus) {
     statusBadge = (
-      <span className="inline-block bg-bonus/20 text-bonus border border-bonus/30 px-3 py-1.5 rounded text-sm font-mono font-medium">
+      <span className="inline-block rounded-full px-3.5 py-1.5 text-[13px] font-semibold bg-bonus-bg text-bonus border border-bonus/30">
         Bonus
       </span>
     )
   } else if (tx.status === 'Lunas') {
     statusBadge = (
-      <span className="inline-block bg-lunas/20 text-lunas border border-lunas/30 px-3 py-1.5 rounded text-sm font-mono font-medium">
+      <span className="inline-block rounded-full px-3.5 py-1.5 text-[13px] font-semibold bg-lunas-bg text-lunas border border-lunas/30">
         Lunas
       </span>
     )
   } else {
     statusBadge = (
-      <span className="inline-block bg-piutang/20 text-piutang border border-piutang/30 px-3 py-1.5 rounded text-sm font-mono font-medium">
+      <span className="inline-block rounded-full px-3.5 py-1.5 text-[13px] font-semibold bg-piutang-bg text-piutang border border-piutang/30">
         Piutang
       </span>
     )
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold text-text">
-            Bon {tx.nomor_bon}
-          </h1>
-          <p className="text-sm text-text-secondary mt-0.5">
-            {tx.customers?.nama ?? '-'} — {formatDate(tx.tanggal)}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">{statusBadge}</div>
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+      <div className="flex items-center gap-2 text-[13px] text-text-muted">
+        <Link href="/transactions" className="hover:text-text transition-colors">
+          Transaksi
+        </Link>
+        <span>/</span>
+        <span className="text-text-secondary">Detail</span>
       </div>
 
-      <div className="bg-surface border border-border rounded-xl p-5 space-y-4 max-w-lg">
-        <div className="flex justify-between">
-          <span className="text-sm text-text-secondary">Nomor Bon</span>
-          <span className="text-sm text-text font-mono">{tx.nomor_bon}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-sm text-text-secondary">Tanggal</span>
-          <span className="text-sm text-text">
-            {formatDate(tx.tanggal)}
-          </span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-sm text-text-secondary">Customer</span>
-          <span className="text-sm text-text">
-            {tx.customers?.nama ?? '-'}
-          </span>
-        </div>
-        {tx.deskripsi && (
-          <div className="flex justify-between">
-            <span className="text-sm text-text-secondary">Deskripsi</span>
-            <span className="text-sm text-text">{tx.deskripsi}</span>
-          </div>
-        )}
-        {tx.payment_date && (
-          <div className="flex justify-between">
-            <span className="text-sm text-text-secondary">
-              Tanggal Lunas
-            </span>
-            <span className="text-sm text-text">
-              {formatDate(tx.payment_date)}
-            </span>
-          </div>
-        )}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
+        <h1 className="text-[22px] md:text-[28px] font-bold text-text">Detail Transaksi</h1>
       </div>
 
-      <div className="bg-surface border border-border rounded-xl p-5">
-        <h2 className="text-base font-medium text-text mb-4">
-          Item Produk
-        </h2>
+      <div className="bg-surface border border-border rounded-2xl p-4 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <span className="text-[15px] font-semibold text-text">Nomor Bon</span>
+            <div className="text-[15px] text-text font-mono mt-0.5">{tx.nomor_bon}</div>
+          </div>
+          <div>
+            <span className="text-[15px] font-semibold text-text">Tanggal</span>
+            <div className="text-[15px] text-text mt-0.5">{formatDate(tx.tanggal)}</div>
+          </div>
+          <div>
+            <span className="text-[15px] font-semibold text-text">Pelanggan</span>
+            <div className="text-[15px] text-text mt-0.5">{tx.customers?.nama ?? '-'}</div>
+          </div>
+          <div>
+            <span className="text-[15px] font-semibold text-text">Status</span>
+            <div className="mt-0.5">{statusBadge}</div>
+          </div>
+          {tx.deskripsi && (
+            <div className="col-span-2">
+              <span className="text-[15px] font-semibold text-text">Deskripsi</span>
+              <div className="text-[15px] text-text mt-0.5">{tx.deskripsi}</div>
+            </div>
+          )}
+          {tx.payment_date && (
+            <div>
+              <span className="text-[15px] font-semibold text-text">Tanggal Lunas</span>
+              <div className="text-[15px] text-text mt-0.5">{formatDate(tx.payment_date)}</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-surface border border-border rounded-2xl p-4 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+        <h2 className="text-[18px] md:text-[22px] font-semibold text-text mb-4">Produk</h2>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="text-left text-xs text-text-muted uppercase tracking-wider font-mono">
-                <th className="pb-3 pr-3 font-medium">Produk</th>
-                <th className="pb-3 pr-3 font-medium">Tipe</th>
-                <th className="pb-3 pr-3 text-right font-medium">Qty</th>
-                <th className="pb-3 pr-3 text-right font-medium">
-                  Harga Base
-                </th>
-                <th className="pb-3 pr-3 text-right font-medium">
-                  Harga Diskon
-                </th>
-                <th className="pb-3 text-right font-medium">Omzet</th>
+              <tr className="text-[13px] uppercase tracking-wider font-semibold text-text-secondary bg-surface-2">
+                <th className="px-4 py-3 text-left rounded-l-lg">Produk</th>
+                <th className="px-4 py-3 text-left">Tipe</th>
+                <th className="px-4 py-3 text-right">Qty</th>
+                <th className="px-4 py-3 text-right">Harga Base</th>
+                <th className="px-4 py-3 text-right">Diskon</th>
+                <th className="px-4 py-3 text-right">Omzet</th>
+                <th className="px-4 py-3 text-right rounded-r-lg">Laba</th>
               </tr>
             </thead>
-            <tbody className="text-[15px]">
+            <tbody>
               {tx.transaction_lines.map((line) => (
                 <tr
                   key={line.id}
-                  className="border-t border-border"
+                  className="border-b border-border"
                 >
-                  <td className="py-3 pr-3 text-text">
+                  <td className="px-4 py-5 align-middle text-[15px] text-text">
                     {line.products?.nama ?? '-'}
                   </td>
-                  <td className="py-3 pr-3">
+                  <td className="px-4 py-5 align-middle">
                     <span
-                      className={`inline-block px-2 py-1 rounded text-xs font-mono font-medium border ${
+                      className={`inline-block px-2.5 py-1 rounded text-[12px] font-semibold border ${
                         line.products?.tipe === 'LM'
                           ? 'bg-blue-900/40 text-blue-400 border-blue-800'
                           : 'bg-purple-900/40 text-purple-400 border-purple-800'
@@ -223,17 +215,20 @@ export default function TransactionDetailPage() {
                       {line.products?.tipe ?? '-'}
                     </span>
                   </td>
-                  <td className="py-3 pr-3 text-right font-mono text-text">
+                  <td className="px-4 py-5 align-middle text-right font-mono text-[15px] text-text">
                     {line.quantity}
                   </td>
-                  <td className="py-3 pr-3 text-right font-mono text-text">
+                  <td className="px-4 py-5 align-middle text-right font-mono text-[15px] text-text">
                     {formatRupiah(line.harga_base)}
                   </td>
-                  <td className="py-3 pr-3 text-right font-mono text-text">
+                  <td className="px-4 py-5 align-middle text-right font-mono text-[15px] text-text">
                     {formatRupiah(line.discounted_price)}
                   </td>
-                  <td className="py-3 text-right font-mono text-accent font-medium">
+                  <td className="px-4 py-5 align-middle text-right font-mono text-[15px] text-accent font-medium">
                     {formatRupiah(line.omzet)}
+                  </td>
+                  <td className="px-4 py-5 align-middle text-right font-mono text-[15px] text-accent font-medium">
+                    {formatRupiah(line.laba)}
                   </td>
                 </tr>
               ))}
@@ -242,54 +237,61 @@ export default function TransactionDetailPage() {
         </div>
       </div>
 
-      <div className="bg-surface border border-border rounded-xl p-5 space-y-2 max-w-md">
-        <div className="flex justify-between text-[15px]">
-          <span className="text-text-secondary">Total Omzet</span>
-          <span className="font-mono text-text">
+      <div className="bg-surface border border-border rounded-2xl p-4 md:p-6 space-y-3 max-w-md shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+        <div className="flex justify-between">
+          <span className="text-[15px] text-text-secondary">Total Omzet</span>
+          <span className="text-[15px] font-mono text-text">
             {formatRupiah(totalOmzet)}
           </span>
         </div>
-        <div className="flex justify-between text-[15px]">
-          <span className="text-text-secondary">Ongkir</span>
-          <span className="font-mono text-text">
+        <div className="flex justify-between">
+          <span className="text-[15px] text-text-secondary">Ongkir</span>
+          <span className="text-[15px] font-mono text-text">
             {formatRupiah(tx.ongkir ?? 0)}
           </span>
         </div>
-        <div className="border-t border-border pt-2 flex justify-between text-[15px]">
-          <span className="text-text font-medium">Total Tagihan</span>
+        <div className="border-t border-border pt-3 flex justify-between">
+          <span className="text-[15px] font-semibold text-text">Total</span>
           <span className="font-mono text-text font-bold text-lg">
             {formatRupiah(totalTagihan)}
           </span>
         </div>
-        <div className="flex justify-between text-[15px]">
-          <span className="text-text-secondary">Total Laba</span>
-          <span className="font-mono text-accent font-medium">
+        <div className="flex justify-between">
+          <span className="text-[15px] text-text-secondary">Total Laba</span>
+          <span className="text-[15px] font-mono text-accent font-medium">
             {formatRupiah(totalLaba)}
           </span>
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+        <Link
+          href="/transactions"
+          className="inline-flex items-center justify-center bg-surface-2 hover:bg-border text-text font-semibold rounded-xl px-6 py-3 text-[15px] transition-colors"
+          style={{ height: '48px' }}
+        >
+          {'\u2190'} Kembali
+        </Link>
         {tx.status === 'Piutang' && !tx.is_bonus && (
           <button
             onClick={() => setShowSettle(true)}
-            className="bg-emerald-500 hover:bg-emerald-400 text-white font-medium rounded-lg px-5 py-3 text-[15px] transition-colors"
+            className="bg-accent hover:bg-[#256F28] text-white font-semibold rounded-xl px-6 py-3 text-[15px] transition-colors"
+            style={{ height: '48px' }}
           >
-            ✅ Tandai Lunas
+            {'\u2705'} Tandai Lunas
           </button>
         )}
         <Link
           href={`/transactions/${tx.id}/edit`}
-          className="text-text-secondary hover:text-text text-[15px] transition-colors"
+          className="inline-flex items-center justify-center bg-surface-2 hover:bg-border text-text font-semibold rounded-xl px-6 py-3 text-[15px] transition-colors"
+          style={{ height: '48px' }}
         >
-          ✏️ Edit Bon
+          Ubah
         </Link>
-        <Link
-          href="/transactions"
-          className="text-text-secondary hover:text-text text-[15px] transition-colors"
-        >
-          ← Kembali
-        </Link>
+        <button className="inline-flex items-center justify-center bg-surface-2 hover:bg-border text-text font-semibold rounded-xl px-6 py-3 text-[15px] transition-colors"
+          style={{ height: '48px' }}>
+          {'\u2B07'} Export PDF
+        </button>
       </div>
 
       {showSettle && (

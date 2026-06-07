@@ -44,7 +44,7 @@ export default function EditProductPage() {
 
   if (loading) {
     return (
-      <div className="p-6 text-center text-text-muted text-[15px]">
+      <div className="p-6 text-center text-text-muted text-[17px]">
         Memuat...
       </div>
     )
@@ -53,22 +53,23 @@ export default function EditProductPage() {
   if (!product) {
     return (
       <div className="p-6 space-y-4">
-        <p className="text-text-muted text-[15px]">
+        <p className="text-text-muted text-[17px]">
           Produk tidak ditemukan.
         </p>
         <Link
           href="/products"
-          className="text-accent hover:text-emerald-400 text-[15px]"
+          className="text-accent hover:text-[#256F28] text-[15px] font-semibold"
         >
-          ← Kembali ke Produk
+          {'\u2190'} Kembali ke Produk
         </Link>
       </div>
     )
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center gap-2 text-sm text-text-muted mb-2">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-[13px] text-text-muted">
         <Link href="/products" className="hover:text-text transition-colors">
           Produk
         </Link>
@@ -76,10 +77,12 @@ export default function EditProductPage() {
         <span className="text-text-secondary">Edit</span>
       </div>
 
-      <h1 className="text-lg font-semibold text-text">
+      <h1 className="text-[22px] md:text-[28px] font-bold text-text">
         Edit Produk: {product.nama}
       </h1>
-      <ProductForm product={product} />
+      <div className="max-w-[720px]">
+        <ProductForm product={product} />
+      </div>
     </div>
   )
 }

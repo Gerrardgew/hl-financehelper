@@ -196,105 +196,109 @@ export default function CustomerForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-xl">
+    <form onSubmit={handleSubmit} className="space-y-5 max-w-xl">
       {error && (
-        <div className="bg-red-950/50 border border-red-800 rounded-lg px-4 py-3 text-sm text-red-400">
+        <div className="bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}
 
-      <div>
-        <label
-          htmlFor="nama"
-          className="block text-sm font-medium text-text-secondary mb-1.5"
+      <div className="bg-surface border border-border rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] space-y-5">
+        <div className="grid grid-cols-2 gap-5">
+          <div>
+            <label
+              htmlFor="nama"
+              className="text-[15px] font-semibold text-text mb-1.5 block"
+            >
+              Nama
+            </label>
+            <input
+              id="nama"
+              type="text"
+              required
+              value={nama}
+              onChange={(e) => setNama(e.target.value)}
+              className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-[16px] text-text placeholder-text-muted outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors"
+              style={{ height: '52px' }}
+              placeholder="Nama customer"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="threshold"
+              className="text-[15px] font-semibold text-text mb-1.5 block"
+            >
+              Batas Bonus
+            </label>
+            <input
+              id="threshold"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              required
+              value={bonusThreshold}
+              onChange={(e) =>
+                setBonusThreshold(e.target.value.replace(/\D/g, ''))
+              }
+              onBlur={() => {
+                if (bonusThreshold === '') setBonusThreshold('0')
+              }}
+              className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-[16px] text-text font-mono placeholder-text-muted outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors"
+              style={{ height: '52px' }}
+            />
+          </div>
+        </div>
+
+        <DiscountStepsEditor
+          label="Diskon LM"
+          steps={stepsLM}
+          onAdd={() => addStep('LM')}
+          onRemove={(i) => removeStep('LM', i)}
+          onChange={(i, v) => updateStep('LM', i, v)}
+          onBlur={(i) => validateStep('LM', i)}
         >
-          Nama Customer
-        </label>
-        <input
-          id="nama"
-          type="text"
-          required
-          value={nama}
-          onChange={(e) => setNama(e.target.value)}
-          className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-sm text-text placeholder-text-muted outline-none focus:border-accent transition-colors"
-          placeholder="Nama customer"
-        />
+          {stepsLM.length > 0 && (
+            <p className="text-sm text-text-secondary mt-3">
+              Harga Rp 100.000 setelah diskon LM = {formatRupiah(lmResult)}{' '}
+              (efektif {lmEff}%)
+            </p>
+          )}
+        </DiscountStepsEditor>
+
+        <DiscountStepsEditor
+          label="Diskon BR"
+          steps={stepsBR}
+          onAdd={() => addStep('BR')}
+          onRemove={(i) => removeStep('BR', i)}
+          onChange={(i, v) => updateStep('BR', i, v)}
+          onBlur={(i) => validateStep('BR', i)}
+        >
+          {stepsBR.length > 0 && (
+            <p className="text-sm text-text-secondary mt-3">
+              Harga Rp 100.000 setelah diskon BR = {formatRupiah(brResult)}{' '}
+              (efektif {brEff}%)
+            </p>
+          )}
+        </DiscountStepsEditor>
       </div>
 
-      <div>
-        <label
-          htmlFor="threshold"
-          className="block text-sm font-medium text-text-secondary mb-1.5"
-        >
-          Bonus Threshold (Rp)
-        </label>
-        <input
-          id="threshold"
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          required
-          value={bonusThreshold}
-          onChange={(e) =>
-            setBonusThreshold(e.target.value.replace(/\D/g, ''))
-          }
-          onBlur={() => {
-            if (bonusThreshold === '') setBonusThreshold('0')
-          }}
-          className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-sm text-text font-mono placeholder-text-muted outline-none focus:border-accent transition-colors"
-        />
-      </div>
-
-      <DiscountStepsEditor
-        label="Diskon LM"
-        steps={stepsLM}
-        onAdd={() => addStep('LM')}
-        onRemove={(i) => removeStep('LM', i)}
-        onChange={(i, v) => updateStep('LM', i, v)}
-        onBlur={(i) => validateStep('LM', i)}
-      >
-        {stepsLM.length > 0 && (
-          <p className="text-xs text-text-secondary mt-2">
-            Harga Rp 100.000 setelah diskon LM = {formatRupiah(lmResult)}{' '}
-            (efektif {lmEff}%)
-          </p>
-        )}
-      </DiscountStepsEditor>
-
-      <DiscountStepsEditor
-        label="Diskon BR"
-        steps={stepsBR}
-        onAdd={() => addStep('BR')}
-        onRemove={(i) => removeStep('BR', i)}
-        onChange={(i, v) => updateStep('BR', i, v)}
-        onBlur={(i) => validateStep('BR', i)}
-      >
-        {stepsBR.length > 0 && (
-          <p className="text-xs text-text-secondary mt-2">
-            Harga Rp 100.000 setelah diskon BR = {formatRupiah(brResult)}{' '}
-            (efektif {brEff}%)
-          </p>
-        )}
-      </DiscountStepsEditor>
-
-      <div className="flex items-center gap-3 pt-2">
+      <div className="flex items-center gap-4">
         <button
           type="submit"
           disabled={saving || hasStepErrors}
-          className="bg-emerald-500 hover:bg-emerald-400 text-white font-medium rounded-lg px-5 py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="bg-accent hover:bg-[#256F28] text-white font-semibold rounded-xl px-5 text-[15px] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          style={{ height: '48px' }}
         >
-          {saving
-            ? 'Menyimpan...'
-            : isEdit
-              ? 'Simpan Perubahan'
-              : 'Buat Customer'}
+          {saving ? 'Menyimpan...' : 'Simpan'}
         </button>
         <button
           type="button"
           onClick={() => router.back()}
-          className="text-text-secondary hover:text-text text-sm transition-colors"
+          className="bg-surface-2 hover:bg-border text-text font-semibold rounded-xl px-5 text-[15px] transition-colors"
+          style={{ height: '48px' }}
         >
-          Batal
+          Kembali
         </button>
       </div>
     </form>
@@ -319,41 +323,41 @@ function DiscountStepsEditor({
   children?: React.ReactNode
 }) {
   return (
-    <div>
-      <label className="block text-sm font-medium text-text-secondary mb-2">
+    <div className="bg-surface-2 rounded-xl p-5">
+      <label className="text-[15px] font-semibold text-text mb-3 block">
         {label}
       </label>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {steps.map((step, i) => (
           <div key={i}>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-text-muted font-mono w-5">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-text-secondary font-medium w-5">
                 {i + 1}.
               </span>
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={step.raw}
-                  onChange={(e) => onChange(i, e.target.value)}
-                  onBlur={() => onBlur(i)}
-                  className="w-full bg-surface-2 border border-border rounded-lg pl-3 pr-8 py-2 text-sm text-text font-mono outline-none focus:border-accent transition-colors"
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted text-sm">
-                  %
-                </span>
-              </div>
+              <span className="text-sm text-text-secondary whitespace-nowrap">
+                Persentase (%)
+              </span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={step.raw}
+                onChange={(e) => onChange(i, e.target.value)}
+                onBlur={() => onBlur(i)}
+                className="bg-surface border border-border rounded-lg px-3 py-2.5 text-[15px] w-24 text-text font-mono outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors"
+              />
               <button
                 type="button"
                 onClick={() => onRemove(i)}
-                className="text-text-muted hover:text-danger text-lg leading-none px-1 transition-colors"
+                className="text-danger hover:bg-danger-bg rounded-lg px-3 py-2 text-sm font-medium transition-colors"
               >
-                ×
+                Hapus
               </button>
             </div>
             {step.error && (
-              <p className="text-xs text-red-400 mt-1 ml-7">{step.error}</p>
+              <p className="text-xs text-red-400 mt-1 ml-[calc(1.25rem+0.75rem+7.5rem)]">
+                {step.error}
+              </p>
             )}
           </div>
         ))}
@@ -362,7 +366,7 @@ function DiscountStepsEditor({
       <button
         type="button"
         onClick={onAdd}
-        className="mt-2 text-xs text-accent hover:text-emerald-400 transition-colors"
+        className="mt-3 text-accent hover:text-accent/80 text-[15px] font-semibold transition-colors"
       >
         + Tambah Step
       </button>
