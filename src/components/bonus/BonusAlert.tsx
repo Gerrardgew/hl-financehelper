@@ -19,7 +19,7 @@ export default function BonusAlert({ customerId, customerName, available }: Prop
           <p className="text-[15px] text-text-secondary mt-0.5">
             Tersedia:{' '}
             <span className="font-mono font-semibold text-bonus">
-              {formatRupiah(available)}
+              {available.toLocaleString('id-ID')}
             </span>
           </p>
         </div>

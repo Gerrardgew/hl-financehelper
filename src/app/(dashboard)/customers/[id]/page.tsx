@@ -377,7 +377,7 @@ export default function CustomerDetailPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4 md:space-y-5" onClick={clearSuccess}>
+    <div className="space-y-4 md:space-y-5" onClick={clearSuccess}>
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-[13px] text-text-muted">
         <Link href="/customers" className="hover:text-text transition-colors">
@@ -465,61 +465,73 @@ export default function CustomerDetailPage() {
       )}
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <div className="bg-surface rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-          <p className="text-[14px] text-text-secondary font-medium">
-            Total Piutang
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <div className="bg-surface rounded-2xl p-4 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+          <p className="text-[12px] md:text-[14px] text-text-secondary font-medium truncate">
+            Piutang
           </p>
-          <p className="text-[20px] md:text-[28px] font-bold font-mono text-piutang mt-2">
+          <p className="text-base md:text-lg lg:text-xl font-mono font-bold leading-tight text-piutang mt-1">
             {formatRupiah(totalPiutang)}
           </p>
-          <p className="text-[13px] text-text-muted mt-1">
+          <p className="text-[11px] md:text-[13px] text-text-muted mt-0.5 truncate">
             {piutangTx.length} transaksi
           </p>
         </div>
-        <div className="bg-surface rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-          <p className="text-[14px] text-text-secondary font-medium">
-            Sudah Dibayar
+        <div className="bg-surface rounded-2xl p-4 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+          <p className="text-[12px] md:text-[14px] text-text-secondary font-medium truncate">
+            Dibayar
           </p>
-          <p className="text-[20px] md:text-[28px] font-bold font-mono text-lunas mt-2">
+          <p className="text-base md:text-lg lg:text-xl font-mono font-bold leading-tight text-lunas mt-1">
             {formatRupiah(totalDibayar)}
           </p>
-          <p className="text-[13px] text-text-muted mt-1">
+          <p className="text-[11px] md:text-[13px] text-text-muted mt-0.5 truncate">
             {lunasTx.length} transaksi
           </p>
         </div>
-        <div className="bg-surface rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-          <p className="text-[14px] text-text-secondary font-medium">
-            Omzet Lunas
+        <div className="bg-surface rounded-2xl p-4 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+          <p className="text-[12px] md:text-[14px] text-text-secondary font-medium truncate">
+            Omzet
           </p>
-          <p className="text-[20px] md:text-[28px] font-bold font-mono text-text mt-2">
+          <p className="text-base md:text-lg lg:text-xl font-mono font-bold leading-tight text-text mt-1">
             {formatRupiah(totalOmzetLunas)}
           </p>
-          <p className="text-[13px] text-text-muted mt-1">
+          <p className="text-[11px] md:text-[13px] text-text-muted mt-0.5 truncate">
             Bulan ini
           </p>
         </div>
-        <div className="bg-surface rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-          <p className="text-[14px] text-text-secondary font-medium">
-            Total Laba
+        <div className="bg-surface rounded-2xl p-4 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+          <p className="text-[12px] md:text-[14px] text-text-secondary font-medium truncate">
+            Laba
           </p>
-          <p className="text-[20px] md:text-[28px] font-bold font-mono text-accent mt-2">
+          <p className="text-base md:text-lg lg:text-xl font-mono font-bold leading-tight text-accent mt-1">
             {formatRupiah(totalLaba)}
           </p>
-          <p className="text-[13px] text-text-muted mt-1">
+          <p className="text-[11px] md:text-[13px] text-text-muted mt-0.5 truncate">
             Bulan ini
           </p>
         </div>
       </div>
 
       {/* LM vs BR Breakdown */}
-      <div className="bg-surface rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] overflow-hidden">
+      <div className="bg-surface rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
         <div className="px-6 pt-6 pb-3">
           <h2 className="text-[18px] md:text-[22px] font-semibold text-text">
             Omzet LM vs BR
           </h2>
         </div>
-        <div className="overflow-x-auto">
+        <div className="relative">
+          <div id="shadow-left-det-lmbr" className="pointer-events-none absolute left-0 top-0 h-full w-8 z-10 opacity-0 transition-opacity bg-gradient-to-r from-surface to-transparent" />
+          <div id="shadow-right-det-lmbr" className="pointer-events-none absolute right-0 top-0 h-full w-8 z-10 transition-opacity bg-gradient-to-l from-surface to-transparent" />
+          <div
+            className="overflow-x-auto scroll-smooth table-scroll"
+            onScroll={(e) => {
+              const el = e.currentTarget
+              const shadowLeft = el.parentElement?.querySelector('#shadow-left-det-lmbr') as HTMLElement
+              const shadowRight = el.parentElement?.querySelector('#shadow-right-det-lmbr') as HTMLElement
+              if (shadowLeft) shadowLeft.style.opacity = el.scrollLeft > 0 ? '1' : '0'
+              if (shadowRight) shadowRight.style.opacity = el.scrollLeft < el.scrollWidth - el.clientWidth ? '1' : '0'
+            }}
+          >
           <table className="w-full">
             <thead>
               <tr className="text-[13px] uppercase tracking-wider font-semibold bg-surface-2">
@@ -558,7 +570,11 @@ export default function CustomerDetailPage() {
               </tr>
             </tbody>
           </table>
-        </div>
+          </div>
+          </div>
+          <p className="text-xs text-text-muted text-right px-4 py-2 lg:hidden">
+            &larr; Geser untuk lihat lebih &rarr;
+          </p>
       </div>
 
       {/* Transactions Table Header */}
@@ -586,7 +602,7 @@ export default function CustomerDetailPage() {
       </div>
 
       {/* Transactions Table */}
-      <div className="bg-surface rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] overflow-hidden">
+      <div className="bg-surface rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
         {transactions.length === 0 ? (
           <div className="p-12 text-center">
             <p className="text-text-muted text-[15px]">
@@ -594,102 +610,176 @@ export default function CustomerDetailPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="text-[13px] uppercase tracking-wider font-semibold bg-surface-2">
-                  <th className="pb-3 pr-3 pt-4 px-6 text-left text-text-secondary font-semibold">Tanggal</th>
-                  <th className="pb-3 pr-3 pt-4 text-left text-text-secondary font-semibold">Nomor Bon</th>
-                  <th className="pb-3 pr-3 pt-4 text-left text-text-secondary font-semibold">Status</th>
-                  <th className="pb-3 pr-3 pt-4 text-right text-text-secondary font-semibold">LM</th>
-                  <th className="pb-3 pr-3 pt-4 text-right text-text-secondary font-semibold">BR</th>
-                  <th className="pb-3 pr-3 pt-4 text-right text-text-secondary font-semibold">Ongkir</th>
-                  <th className="pb-3 pr-3 pt-4 text-right text-text-secondary font-semibold">Total</th>
-                  <th className="pb-3 pt-4 pr-6 text-left text-text-secondary font-semibold">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="text-[15px]">
-                {transactions.map((tx) => {
-                  let lineOmzetLm = 0
-                  let lineOmzetBr = 0
-                  for (const line of tx.transaction_lines) {
-                    if (line.products?.tipe === 'LM') lineOmzetLm += line.omzet ?? 0
-                    else if (line.products?.tipe === 'BR') lineOmzetBr += line.omzet ?? 0
-                  }
-                  const totalAmt = lineOmzetLm + lineOmzetBr + (tx.ongkir ?? 0)
+          <>
+            {/* Mobile card view */}
+            <div className="block md:hidden space-y-3 p-4">
+              {transactions.map((tx) => {
+                let lineOmzetLm = 0
+                let lineOmzetBr = 0
+                for (const line of tx.transaction_lines) {
+                  if (line.products?.tipe === 'LM') lineOmzetLm += line.omzet ?? 0
+                  else if (line.products?.tipe === 'BR') lineOmzetBr += line.omzet ?? 0
+                }
+                const totalAmt = lineOmzetLm + lineOmzetBr + (tx.ongkir ?? 0)
 
-                  let badge: React.ReactNode
-                  if (tx.is_bonus) {
-                    badge = (
-                      <span className="inline-block rounded-full px-3.5 py-1.5 text-[13px] font-semibold bg-bonus-bg text-bonus border border-bonus/30">
-                        BONUS
-                      </span>
-                    )
-                  } else if (tx.status === 'Lunas') {
-                    badge = (
-                      <span className="inline-block rounded-full px-3.5 py-1.5 text-[13px] font-semibold bg-lunas-bg text-lunas border border-lunas/30">
-                        Lunas
-                      </span>
-                    )
-                  } else {
-                    badge = (
-                      <span className="inline-block rounded-full px-3.5 py-1.5 text-[13px] font-semibold bg-piutang-bg text-piutang border border-piutang/30">
-                        Piutang
-                      </span>
-                    )
-                  }
-
-                  return (
-                    <tr
-                      key={tx.id}
-                      className="border-b border-border odd:bg-surface-2/30"
-                      style={{ height: 64 }}
-                    >
-                      <td className="px-6 text-text-secondary whitespace-nowrap">
-                        {formatDate(tx.tanggal)}
-                      </td>
-                      <td className="pr-3 font-mono text-text whitespace-nowrap">
-                        {tx.nomor_bon}
-                      </td>
-                      <td className="pr-3 whitespace-nowrap">{badge}</td>
-                      <td className="pr-3 text-right font-mono text-text whitespace-nowrap">
-                        {tx.is_bonus ? '\u2014' : formatRupiah(lineOmzetLm)}
-                      </td>
-                      <td className="pr-3 text-right font-mono text-text whitespace-nowrap">
-                        {tx.is_bonus ? '\u2014' : formatRupiah(lineOmzetBr)}
-                      </td>
-                      <td className="pr-3 text-right font-mono text-text whitespace-nowrap">
-                        {tx.is_bonus ? '\u2014' : formatRupiah(tx.ongkir ?? 0)}
-                      </td>
-                      <td className="pr-3 text-right font-mono text-text font-medium whitespace-nowrap">
-                        {tx.is_bonus ? '\u2014' : formatRupiah(totalAmt)}
-                      </td>
-                      <td className="pr-6 flex items-center gap-2 whitespace-nowrap">
-                        {tx.status === 'Piutang' && !tx.is_bonus && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setSettleTx(tx)
-                              setSettleDate(format(new Date(), 'yyyy-MM-dd'))
-                            }}
-                            className="bg-lunas hover:bg-[#256F28] text-white font-semibold rounded-lg px-4 py-2 text-[13px] transition-colors"
-                          >
-                            &#x2705; Lunas
-                          </button>
-                        )}
-                        <Link
-                          href={`/transactions/${tx.id}`}
-                          className="bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors"
-                        >
-                          &#x1F50D; Detail
-                        </Link>
-                      </td>
-                    </tr>
+                let badge: React.ReactNode
+                if (tx.is_bonus) {
+                  badge = (
+                    <span className="inline-block rounded-full px-3.5 py-1.5 text-[13px] font-semibold bg-bonus-bg text-bonus border border-bonus/30">BONUS</span>
                   )
-                })}
-              </tbody>
-            </table>
+                } else if (tx.status === 'Lunas') {
+                  badge = (
+                    <span className="inline-block rounded-full px-3.5 py-1.5 text-[13px] font-semibold bg-lunas-bg text-lunas border border-lunas/30">Lunas</span>
+                  )
+                } else {
+                  badge = (
+                    <span className="inline-block rounded-full px-3.5 py-1.5 text-[13px] font-semibold bg-piutang-bg text-piutang border border-piutang/30">Piutang</span>
+                  )
+                }
+
+                return (
+                  <div key={tx.id} className="bg-surface border border-border rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-mono tracking-normal text-text font-semibold">{tx.nomor_bon}</span>
+                      {badge}
+                    </div>
+                    <div className="space-y-1 text-[13px] text-text-secondary">
+                      <p>Tanggal: <span className="text-text">{formatDate(tx.tanggal)}</span></p>
+                      <p>LM: <span className="font-mono text-text">{tx.is_bonus ? '\u2014' : formatRupiah(lineOmzetLm)}</span></p>
+                      <p>BR: <span className="font-mono text-text">{tx.is_bonus ? '\u2014' : formatRupiah(lineOmzetBr)}</span></p>
+                      <p>Total: <span className="font-mono text-text font-semibold">{tx.is_bonus ? '\u2014' : formatRupiah(totalAmt)}</span></p>
+                    </div>
+                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+                      {tx.status === 'Piutang' && !tx.is_bonus && (
+                        <button onClick={() => { setSettleTx(tx); setSettleDate(format(new Date(), 'yyyy-MM-dd')) }} className="bg-lunas hover:bg-[#256F28] text-white font-semibold rounded-lg px-4 py-2 text-[13px] transition-colors">
+                          &#x2705; Lunas
+                        </button>
+                      )}
+                      <Link href={`/transactions/${tx.id}`} className="bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors">
+                        &#x1F50D; Detail
+                      </Link>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Tablet/Desktop table */}
+            <div className="hidden md:block">
+              <div className="relative">
+                <div id="shadow-left-det-tx" className="pointer-events-none absolute left-0 top-0 h-full w-8 z-10 opacity-0 transition-opacity bg-gradient-to-r from-surface to-transparent" />
+                <div id="shadow-right-det-tx" className="pointer-events-none absolute right-0 top-0 h-full w-8 z-10 transition-opacity bg-gradient-to-l from-surface to-transparent" />
+                <div
+                  className="overflow-x-auto scroll-smooth table-scroll"
+                  onScroll={(e) => {
+                    const el = e.currentTarget
+                    const shadowLeft = el.parentElement?.querySelector('#shadow-left-det-tx') as HTMLElement
+                    const shadowRight = el.parentElement?.querySelector('#shadow-right-det-tx') as HTMLElement
+                    if (shadowLeft) shadowLeft.style.opacity = el.scrollLeft > 0 ? '1' : '0'
+                    if (shadowRight) shadowRight.style.opacity = el.scrollLeft < el.scrollWidth - el.clientWidth ? '1' : '0'
+                  }}
+                >
+              <table className="w-full min-w-[750px]">
+                <thead>
+                  <tr className="text-[13px] uppercase tracking-wider font-semibold bg-surface-2">
+                    <th className="pb-3 pr-3 pt-4 px-6 text-left text-text-secondary font-semibold">Tanggal</th>
+                    <th className="pb-3 pr-3 pt-4 text-left text-text-secondary font-semibold">Nomor Bon</th>
+                    <th className="pb-3 pr-3 pt-4 text-left text-text-secondary font-semibold">Status</th>
+                    <th className="pb-3 pr-3 pt-4 text-right text-text-secondary font-semibold">LM</th>
+                    <th className="pb-3 pr-3 pt-4 text-right text-text-secondary font-semibold">BR</th>
+                    <th className="pb-3 pr-3 pt-4 text-right text-text-secondary font-semibold">Ongkir</th>
+                    <th className="pb-3 pr-3 pt-4 text-right text-text-secondary font-semibold">Total</th>
+                    <th className="pb-3 pt-4 pr-6 text-left text-text-secondary font-semibold">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="text-[15px]">
+                  {transactions.map((tx) => {
+                    let lineOmzetLm = 0
+                    let lineOmzetBr = 0
+                    for (const line of tx.transaction_lines) {
+                      if (line.products?.tipe === 'LM') lineOmzetLm += line.omzet ?? 0
+                      else if (line.products?.tipe === 'BR') lineOmzetBr += line.omzet ?? 0
+                    }
+                    const totalAmt = lineOmzetLm + lineOmzetBr + (tx.ongkir ?? 0)
+
+                    let badge: React.ReactNode
+                    if (tx.is_bonus) {
+                      badge = (
+                        <span className="inline-block rounded-full px-3.5 py-1.5 text-[13px] font-semibold bg-bonus-bg text-bonus border border-bonus/30">
+                          BONUS
+                        </span>
+                      )
+                    } else if (tx.status === 'Lunas') {
+                      badge = (
+                        <span className="inline-block rounded-full px-3.5 py-1.5 text-[13px] font-semibold bg-lunas-bg text-lunas border border-lunas/30">
+                          Lunas
+                        </span>
+                      )
+                    } else {
+                      badge = (
+                        <span className="inline-block rounded-full px-3.5 py-1.5 text-[13px] font-semibold bg-piutang-bg text-piutang border border-piutang/30">
+                          Piutang
+                        </span>
+                      )
+                    }
+
+                    return (
+                      <tr
+                        key={tx.id}
+                        className="border-b border-border odd:bg-surface-2/30"
+                        style={{ height: 64 }}
+                      >
+                        <td className="px-6 text-text-secondary whitespace-nowrap">
+                          {formatDate(tx.tanggal)}
+                        </td>
+                        <td className="pr-3 font-mono tracking-normal text-text whitespace-nowrap">
+                          {tx.nomor_bon}
+                        </td>
+                        <td className="pr-3 whitespace-nowrap">{badge}</td>
+                        <td className="pr-3 text-right font-mono text-text whitespace-nowrap">
+                          {tx.is_bonus ? '\u2014' : formatRupiah(lineOmzetLm)}
+                        </td>
+                        <td className="pr-3 text-right font-mono text-text whitespace-nowrap">
+                          {tx.is_bonus ? '\u2014' : formatRupiah(lineOmzetBr)}
+                        </td>
+                        <td className="pr-3 text-right font-mono text-text whitespace-nowrap">
+                          {tx.is_bonus ? '\u2014' : formatRupiah(tx.ongkir ?? 0)}
+                        </td>
+                        <td className="pr-3 text-right font-mono text-text font-medium whitespace-nowrap">
+                          {tx.is_bonus ? '\u2014' : formatRupiah(totalAmt)}
+                        </td>
+                        <td className="pr-6 flex items-center gap-2 whitespace-nowrap">
+                          {tx.status === 'Piutang' && !tx.is_bonus && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setSettleTx(tx)
+                                setSettleDate(format(new Date(), 'yyyy-MM-dd'))
+                              }}
+                              className="bg-lunas hover:bg-[#256F28] text-white font-semibold rounded-lg px-4 py-2 text-[13px] transition-colors"
+                            >
+                              &#x2705; Lunas
+                            </button>
+                          )}
+                          <Link
+                            href={`/transactions/${tx.id}`}
+                            className="bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors"
+                          >
+                            &#x1F50D; Detail
+                          </Link>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
+          <p className="text-xs text-text-muted text-right px-4 py-2 lg:hidden">
+            &larr; Geser untuk lihat lebih &rarr;
+          </p>
+        </div>
+          </>
         )}
       </div>
 

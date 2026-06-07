@@ -9,7 +9,7 @@ interface ProductRow {
   id: string
   nama: string
   tipe: 'LM' | 'BR'
-  harga_jual: number
+  harga_base: number
   harga_modal: number
   is_deleted: boolean
 }
@@ -68,7 +68,7 @@ export default function ProductsPage() {
   )
 
   return (
-    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
         <h1 className="text-[22px] md:text-[28px] font-bold text-text">Produk</h1>
@@ -94,7 +94,7 @@ export default function ProductsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+      <div className="bg-surface border border-border rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
         {loading ? (
           <div className="p-12 text-center text-text-muted text-[17px]">
             Memuat...
@@ -113,70 +113,125 @@ export default function ProductsPage() {
             </Link>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="text-left text-[13px] text-text-secondary uppercase tracking-wider font-semibold bg-surface-2">
-                  <th className="px-5 py-4 font-medium">Nama</th>
-                  <th className="px-4 py-4 font-medium">Tipe</th>
-                  <th className="px-4 py-4 text-right font-medium">Harga Jual</th>
-                  <th className="px-4 py-4 text-right font-medium">Harga Modal</th>
-                  <th className="px-4 py-4 text-right font-medium">Laba</th>
-                  <th className="px-5 py-4 font-medium">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="text-[15px]">
-                {filtered.map((p, i) => {
-                  const laba = p.harga_jual - p.harga_modal
-                  return (
-                    <tr
-                      key={p.id}
-                      className={`border-b border-border hover:bg-surface-2/50 transition-colors ${i % 2 === 1 ? 'bg-surface-2/30' : ''}`}
-                      style={{ height: '64px' }}
-                    >
-                      <td className="px-5 text-text font-semibold">{p.nama}</td>
-                      <td className="px-4">
-                        <span
-                          className={`inline-block rounded-full px-3 py-1 text-[13px] font-semibold ${
-                            p.tipe === 'LM'
-                              ? 'bg-blue-bg text-blue border border-blue/30'
-                              : 'bg-purple-bg text-purple border border-purple/30'
-                          }`}
-                        >
-                          {p.tipe}
-                        </span>
-                      </td>
-                      <td className="px-4 text-right font-mono text-text">
-                        {formatRupiah(p.harga_jual)}
-                      </td>
-                      <td className="px-4 text-right font-mono text-text-secondary">
-                        {formatRupiah(p.harga_modal)}
-                      </td>
-                      <td className="px-4 text-right font-mono text-accent font-semibold">
-                        {formatRupiah(laba)}
-                      </td>
-                      <td className="px-5">
-                        <div className="flex items-center gap-2">
-                          <Link
-                            href={`/products/${p.id}/edit`}
-                            className="bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors"
+          <>
+            {/* Mobile card view */}
+            <div className="block md:hidden space-y-3">
+              {filtered.map((p) => {
+                const laba = (Number(p.harga_base) || 0) - (Number(p.harga_modal) || 0)
+                return (
+                  <div key={p.id} className="bg-surface border border-border rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-text font-semibold">{p.nama}</span>
+                      <span className={`inline-block rounded-full px-3 py-1 text-[12px] font-semibold ${
+                        p.tipe === 'LM'
+                          ? 'bg-blue-bg text-blue border border-blue/30'
+                          : 'bg-purple-bg text-purple border border-purple/30'
+                      }`}>
+                        {p.tipe}
+                      </span>
+                    </div>
+                    <div className="space-y-1 text-[13px] text-text-secondary">
+                      <p>Harga Jual: <span className="font-mono text-text">{formatRupiah(Number(p.harga_base) || 0)}</span></p>
+                      <p>Harga Modal: <span className="font-mono text-text-secondary">{formatRupiah(Number(p.harga_modal) || 0)}</span></p>
+                      <p>Laba: <span className="font-mono text-accent font-semibold">{formatRupiah(laba)}</span></p>
+                    </div>
+                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+                      <Link href={`/products/${p.id}/edit`} className="bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors">
+                        Ubah
+                      </Link>
+                      <button onClick={() => handleDelete(p.id, p.nama)} className="text-danger hover:bg-danger-bg font-medium rounded-lg px-4 py-2 text-[13px] transition-colors">
+                        Hapus
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Tablet/Desktop table */}
+            <div className="hidden md:block">
+              <div className="relative">
+                <div id="shadow-left-prod" className="pointer-events-none absolute left-0 top-0 h-full w-8 z-10 opacity-0 transition-opacity bg-gradient-to-r from-surface to-transparent" />
+                <div id="shadow-right-prod" className="pointer-events-none absolute right-0 top-0 h-full w-8 z-10 transition-opacity bg-gradient-to-l from-surface to-transparent" />
+                <div
+                  className="overflow-x-auto scroll-smooth table-scroll"
+                  onScroll={(e) => {
+                    const el = e.currentTarget
+                    const shadowLeft = el.parentElement?.querySelector('#shadow-left-prod') as HTMLElement
+                    const shadowRight = el.parentElement?.querySelector('#shadow-right-prod') as HTMLElement
+                    if (shadowLeft) shadowLeft.style.opacity = el.scrollLeft > 0 ? '1' : '0'
+                    if (shadowRight) shadowRight.style.opacity = el.scrollLeft < el.scrollWidth - el.clientWidth ? '1' : '0'
+                  }}
+                >
+              <table className="w-full min-w-[500px]">
+                <thead>
+                  <tr className="text-left text-[13px] text-text-secondary uppercase tracking-wider font-semibold bg-surface-2">
+                    <th className="px-5 py-4 font-medium">Nama</th>
+                    <th className="px-4 py-4 font-medium">Tipe</th>
+                    <th className="px-4 py-4 text-right font-medium">Harga Jual</th>
+                    <th className="px-4 py-4 text-right font-medium">Harga Modal</th>
+                    <th className="px-4 py-4 text-right font-medium">Laba</th>
+                    <th className="px-5 py-4 font-medium">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="text-[15px]">
+                  {filtered.map((p, i) => {
+                    const laba = (Number(p.harga_base) || 0) - (Number(p.harga_modal) || 0)
+                    return (
+                      <tr
+                        key={p.id}
+                        className={`border-b border-border hover:bg-surface-2/50 transition-colors ${i % 2 === 1 ? 'bg-surface-2/30' : ''}`}
+                        style={{ height: '64px' }}
+                      >
+                        <td className="px-5 text-text font-semibold">{p.nama}</td>
+                        <td className="px-4">
+                          <span
+                            className={`inline-block rounded-full px-3 py-1 text-[13px] font-semibold ${
+                              p.tipe === 'LM'
+                                ? 'bg-blue-bg text-blue border border-blue/30'
+                                : 'bg-purple-bg text-purple border border-purple/30'
+                            }`}
                           >
-                            Ubah
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(p.id, p.nama)}
-                            className="text-danger hover:bg-danger-bg font-medium rounded-lg px-4 py-2 text-[13px] transition-colors"
-                          >
-                            Hapus
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                            {p.tipe}
+                          </span>
+                        </td>
+                        <td className="px-4 text-right font-mono text-text">
+                          {formatRupiah(Number(p.harga_base) || 0)}
+                        </td>
+                        <td className="px-4 text-right font-mono text-text-secondary">
+                          {formatRupiah(Number(p.harga_modal) || 0)}
+                        </td>
+                        <td className="px-4 text-right font-mono text-accent font-semibold">
+                          {formatRupiah(laba)}
+                        </td>
+                        <td className="px-5">
+                          <div className="flex items-center gap-2">
+                            <Link
+                              href={`/products/${p.id}/edit`}
+                              className="bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors"
+                            >
+                              Ubah
+                            </Link>
+                            <button
+                              onClick={() => handleDelete(p.id, p.nama)}
+                              className="text-danger hover:bg-danger-bg font-medium rounded-lg px-4 py-2 text-[13px] transition-colors"
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
+          <p className="text-xs text-text-muted text-right px-4 py-2 lg:hidden">
+            &larr; Geser untuk lihat lebih &rarr;
+          </p>
+        </div>
+          </>
         )}
       </div>
     </div>

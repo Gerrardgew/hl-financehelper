@@ -182,7 +182,8 @@ export default function TransactionDetailPage() {
 
       <div className="bg-surface border border-border rounded-2xl p-4 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
         <h2 className="text-[18px] md:text-[22px] font-semibold text-text mb-4">Produk</h2>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto relative">
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-surface to-transparent z-10" />
           <table className="w-full">
             <thead>
               <tr className="text-[13px] uppercase tracking-wider font-semibold text-text-secondary bg-surface-2">

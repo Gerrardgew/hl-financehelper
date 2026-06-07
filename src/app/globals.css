@@ -167,3 +167,19 @@ input:-webkit-autofill:focus {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Custom scrollbar untuk tabel */
+.table-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+.table-scroll::-webkit-scrollbar-track {
+  background: var(--color-surface-2);
+  border-radius: 3px;
+}
+.table-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+.table-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}

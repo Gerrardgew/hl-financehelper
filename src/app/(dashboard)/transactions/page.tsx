@@ -47,7 +47,7 @@ export default function TransactionsPage() {
   )
 
   return (
-    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
         <h1 className="text-[22px] md:text-[28px] font-bold text-text">Transaksi</h1>
@@ -73,7 +73,7 @@ export default function TransactionsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+      <div className="bg-surface border border-border rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
         {loading ? (
           <div className="p-12 text-center text-text-muted text-[17px]">
             Memuat...
@@ -92,88 +92,163 @@ export default function TransactionsPage() {
             </Link>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="text-left text-[13px] text-text-secondary uppercase tracking-wider font-semibold bg-surface-2">
-                  <th className="px-5 py-4 font-medium">Tanggal</th>
-                  <th className="px-4 py-4 font-medium">Nomor Bon</th>
-                  <th className="px-4 py-4 font-medium">Pelanggan</th>
-                  <th className="px-4 py-4 font-medium">Status</th>
-                  <th className="px-4 py-4 text-right font-medium">Total</th>
-                  <th className="px-5 py-4 font-medium">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="text-[15px]">
-                {filtered.map((tx, i) => {
-                  const total =
-                    tx.transaction_lines.reduce((s, l) => s + (l.omzet ?? 0), 0) +
-                    (tx.ongkir ?? 0)
+          <>
+            {/* Mobile card view */}
+            <div className="block md:hidden space-y-3">
+              {filtered.map((tx) => {
+                const total =
+                  tx.transaction_lines.reduce((s, l) => s + (l.omzet ?? 0), 0) +
+                  (tx.ongkir ?? 0)
 
-                  let badge
-                  if (tx.is_bonus) {
-                    badge = (
-                      <span className="inline-block bg-bonus-bg text-bonus border border-bonus/30 rounded-full px-3.5 py-1.5 text-[13px] font-semibold">
-                        Bonus
-                      </span>
-                    )
-                  } else if (tx.status === 'Lunas') {
-                    badge = (
-                      <span className="inline-block bg-lunas-bg text-lunas border border-lunas/30 rounded-full px-3.5 py-1.5 text-[13px] font-semibold">
-                        Lunas
-                      </span>
-                    )
-                  } else {
-                    badge = (
-                      <span className="inline-block bg-piutang-bg text-piutang border border-piutang/30 rounded-full px-3.5 py-1.5 text-[13px] font-semibold">
-                        Piutang
-                      </span>
-                    )
-                  }
+                let badge
+                if (tx.is_bonus) {
+                  badge = (
+                    <span className="inline-block bg-bonus-bg text-bonus border border-bonus/30 rounded-full px-3.5 py-1.5 text-[13px] font-semibold">
+                      Bonus
+                    </span>
+                  )
+                } else if (tx.status === 'Lunas') {
+                  badge = (
+                    <span className="inline-block bg-lunas-bg text-lunas border border-lunas/30 rounded-full px-3.5 py-1.5 text-[13px] font-semibold">
+                      Lunas
+                    </span>
+                  )
+                } else {
+                  badge = (
+                    <span className="inline-block bg-piutang-bg text-piutang border border-piutang/30 rounded-full px-3.5 py-1.5 text-[13px] font-semibold">
+                      Piutang
+                    </span>
+                  )
+                }
 
-                  return (
-                    <tr
-                      key={tx.id}
-                      className={`border-b border-border hover:bg-surface-2/50 transition-colors ${i % 2 === 1 ? 'bg-surface-2/30' : ''}`}
-                      style={{ height: '64px' }}
-                    >
-                      <td className="px-5 text-text-secondary whitespace-nowrap">
-                        {formatDate(tx.tanggal)}
-                      </td>
-                      <td className="px-4 font-mono text-text whitespace-nowrap">
-                        {tx.nomor_bon}
-                      </td>
-                      <td className="px-4 text-text whitespace-nowrap">
-                        {tx.customers?.nama ?? '-'}
-                      </td>
-                      <td className="px-4 whitespace-nowrap">{badge}</td>
-                      <td className="px-4 text-right font-mono text-text font-medium whitespace-nowrap">
-                        {formatRupiah(total)}
-                      </td>
-                      <td className="px-5">
-                        <div className="flex items-center gap-2">
-                          <Link
-                            href={`/transactions/${tx.id}`}
-                            className="bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors"
-                          >
-                            {'\uD83D\uDD0D'} Detail
-                          </Link>
-                          {tx.status === 'Piutang' && !tx.is_bonus && (
+                return (
+                  <div key={tx.id} className="bg-surface border border-border rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-mono tracking-normal text-text font-semibold">{tx.nomor_bon}</span>
+                      {badge}
+                    </div>
+                    <div className="space-y-1 text-[13px] text-text-secondary">
+                      <p>Pelanggan: <span className="text-text">{tx.customers?.nama ?? '-'}</span></p>
+                      <p>Tanggal: <span className="text-text">{formatDate(tx.tanggal)}</span></p>
+                      <p>Total: <span className="font-mono text-text font-semibold">{tx.is_bonus ? <span className="bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300 px-3 py-1 rounded-full text-sm font-semibold">GRATIS</span> : formatRupiah(total)}</span></p>
+                    </div>
+                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+                      <Link href={`/transactions/${tx.id}`} className="bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors">
+                        {'\uD83D\uDD0D'} Detail
+                      </Link>
+                      {tx.status === 'Piutang' && !tx.is_bonus && (
+                        <Link href={`/transactions/${tx.id}/edit`} className="bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors">
+                          Ubah
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Tablet/Desktop table */}
+            <div className="hidden md:block">
+              <div className="relative">
+                <div id="shadow-left-tx" className="pointer-events-none absolute left-0 top-0 h-full w-8 z-10 opacity-0 transition-opacity bg-gradient-to-r from-surface to-transparent" />
+                <div id="shadow-right-tx" className="pointer-events-none absolute right-0 top-0 h-full w-8 z-10 transition-opacity bg-gradient-to-l from-surface to-transparent" />
+                <div
+                  className="overflow-x-auto scroll-smooth table-scroll"
+                  onScroll={(e) => {
+                    const el = e.currentTarget
+                    const shadowLeft = el.parentElement?.querySelector('#shadow-left-tx') as HTMLElement
+                    const shadowRight = el.parentElement?.querySelector('#shadow-right-tx') as HTMLElement
+                    if (shadowLeft) shadowLeft.style.opacity = el.scrollLeft > 0 ? '1' : '0'
+                    if (shadowRight) shadowRight.style.opacity = el.scrollLeft < el.scrollWidth - el.clientWidth ? '1' : '0'
+                  }}
+                >
+              <table className="w-full min-w-[800px]">
+                <thead>
+                  <tr className="text-left text-[13px] text-text-secondary uppercase tracking-wider font-semibold bg-surface-2">
+                    <th className="px-5 py-4 font-medium">Tanggal</th>
+                    <th className="px-4 py-4 font-medium">Nomor Bon</th>
+                    <th className="px-4 py-4 font-medium">Pelanggan</th>
+                    <th className="px-4 py-4 font-medium">Status</th>
+                    <th className="px-4 py-4 text-right font-medium">Total</th>
+                    <th className="px-5 py-4 font-medium">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="text-[15px]">
+                  {filtered.map((tx, i) => {
+                    const total =
+                      tx.transaction_lines.reduce((s, l) => s + (l.omzet ?? 0), 0) +
+                      (tx.ongkir ?? 0)
+
+                    let badge
+                    if (tx.is_bonus) {
+                      badge = (
+                        <span className="inline-block bg-bonus-bg text-bonus border border-bonus/30 rounded-full px-3.5 py-1.5 text-[13px] font-semibold">
+                          Bonus
+                        </span>
+                      )
+                    } else if (tx.status === 'Lunas') {
+                      badge = (
+                        <span className="inline-block bg-lunas-bg text-lunas border border-lunas/30 rounded-full px-3.5 py-1.5 text-[13px] font-semibold">
+                          Lunas
+                        </span>
+                      )
+                    } else {
+                      badge = (
+                        <span className="inline-block bg-piutang-bg text-piutang border border-piutang/30 rounded-full px-3.5 py-1.5 text-[13px] font-semibold">
+                          Piutang
+                        </span>
+                      )
+                    }
+
+                    return (
+                      <tr
+                        key={tx.id}
+                        className={`border-b border-border hover:bg-surface-2/50 transition-colors ${i % 2 === 1 ? 'bg-surface-2/30' : ''}`}
+                        style={{ height: '64px' }}
+                      >
+                        <td className="px-5 text-text-secondary whitespace-nowrap">
+                          {formatDate(tx.tanggal)}
+                        </td>
+                        <td className="px-4 font-mono tracking-normal text-text whitespace-nowrap">
+                          {tx.nomor_bon}
+                        </td>
+                        <td className="px-4 text-text whitespace-nowrap">
+                          {tx.customers?.nama ?? '-'}
+                        </td>
+                        <td className="px-4 whitespace-nowrap">{badge}</td>
+                        <td className="px-4 text-right font-mono text-text font-medium whitespace-nowrap">
+                          {formatRupiah(total)}
+                        </td>
+                        <td className="px-5">
+                          <div className="flex items-center gap-2">
                             <Link
-                              href={`/transactions/${tx.id}/edit`}
+                              href={`/transactions/${tx.id}`}
                               className="bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors"
                             >
-                              Ubah
+                              {'\uD83D\uDD0D'} Detail
                             </Link>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                            {tx.status === 'Piutang' && !tx.is_bonus && (
+                              <Link
+                                href={`/transactions/${tx.id}/edit`}
+                                className="bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors"
+                              >
+                                Ubah
+                              </Link>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
+          <p className="text-xs text-text-muted text-right px-4 py-2 lg:hidden">
+            &larr; Geser untuk lihat lebih &rarr;
+          </p>
+        </div>
+          </>
         )}
       </div>
     </div>

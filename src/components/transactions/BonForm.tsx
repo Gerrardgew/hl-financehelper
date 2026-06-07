@@ -800,7 +800,8 @@ export default function BonForm({
             Belum ada produk. Klik &quot;+ Tambah Produk&quot; untuk mulai.
           </p>
         ) : (
-          <div className="overflow-x-auto touch-scroll">
+          <div className="overflow-x-auto touch-scroll relative">
+            <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-surface to-transparent z-10" />
             <p className="text-[13px] text-text-secondary text-center md:hidden mb-1 animate-pulse">← Geser untuk detail lengkap →</p>
             <table className="w-full">
               <thead>

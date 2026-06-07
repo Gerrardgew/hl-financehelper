@@ -526,7 +526,7 @@ export default function RecapPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <h1 className="text-[22px] md:text-[28px] font-bold text-text">Laporan</h1>
         <button
@@ -644,10 +644,10 @@ export default function RecapPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <div className="bg-surface rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-          <p className="text-xs text-text-muted uppercase tracking-wider font-medium">
-            Total Omzet
+          <p className="text-xs text-text-secondary font-medium">
+            Omzet
           </p>
           <p className="text-[20px] md:text-[28px] font-mono font-bold text-text mt-2">
             {formatRupiah(totalOmzetLunas)}
@@ -657,8 +657,8 @@ export default function RecapPage() {
           </p>
         </div>
         <div className="bg-surface rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-          <p className="text-xs text-text-muted uppercase tracking-wider font-medium">
-            Total Laba
+          <p className="text-xs text-text-secondary font-medium">
+            Laba
           </p>
           <p className="text-[20px] md:text-[28px] font-mono font-bold text-accent mt-2">
             {formatRupiah(totalLaba)}
@@ -668,8 +668,8 @@ export default function RecapPage() {
           </p>
         </div>
         <div className="bg-surface rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-          <p className="text-xs text-text-muted uppercase tracking-wider font-medium">
-            Piutang Outstanding
+          <p className="text-xs text-text-secondary font-medium">
+            Piutang
           </p>
           <p className="text-[20px] md:text-[28px] font-mono font-bold text-piutang mt-2">
             {formatRupiah(totalPiutang)}
@@ -679,8 +679,8 @@ export default function RecapPage() {
           </p>
         </div>
         <div className="bg-surface rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-          <p className="text-xs text-text-muted uppercase tracking-wider font-medium">
-            Sudah Dibayar
+          <p className="text-xs text-text-secondary font-medium">
+            Dibayar
           </p>
           <p className="text-[20px] md:text-[28px] font-mono font-bold text-lunas mt-2">
             {formatRupiah(totalDibayar)}
@@ -693,92 +693,184 @@ export default function RecapPage() {
 
       {/* Per-Customer Breakdown */}
       {!filterCustomer && perCustomer.length > 0 && (
-        <div className="bg-surface rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] overflow-hidden">
+        <div className="bg-surface rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
           <div className="px-6 pt-6 pb-4">
             <h2 className="text-[18px] md:text-[22px] font-semibold text-text">Breakdown per Customer</h2>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[600px]">
-              <thead>
-                <tr className="text-left text-[13px] uppercase tracking-wider font-semibold bg-surface-2">
-                  <th className="px-6 py-4">Pelanggan</th>
-                  <th className="px-4 py-4 text-right">Omzet LM</th>
-                  <th className="px-4 py-4 text-right">Omzet BR</th>
-                  <th className="px-4 py-4 text-right">Total Omzet</th>
-                  <th className="px-4 py-4 text-right">Laba</th>
-                  <th className="px-6 py-4 text-right">Piutang</th>
-                </tr>
-              </thead>
-              <tbody className="text-[15px]">
-                {perCustomer.map((r, i) => (
-                  <tr key={i} className="border-b border-border hover:bg-surface-2/50 transition-colors odd:bg-surface-2/30">
-                    <td className="px-6 py-5 text-text font-medium">{r.nama}</td>
-                    <td className="px-4 py-5 text-right font-mono text-text">{formatRupiah(r.omzetLM)}</td>
-                    <td className="px-4 py-5 text-right font-mono text-text">{formatRupiah(r.omzetBR)}</td>
-                    <td className="px-4 py-5 text-right font-mono text-text">{formatRupiah(r.totalOmzet)}</td>
-                    <td className="px-4 py-5 text-right font-mono text-accent">{formatRupiah(r.laba)}</td>
-                    <td className="px-6 py-5 text-right font-mono text-piutang">{formatRupiah(r.piutang)}</td>
+
+          {/* Mobile card view */}
+          <div className="block md:hidden space-y-3 px-4 pb-4">
+            {perCustomer.map((r, i) => (
+              <div key={i} className="bg-surface border border-border rounded-xl p-4">
+                <p className="text-text font-semibold mb-2">{r.nama}</p>
+                <div className="space-y-1 text-[13px] text-text-secondary">
+                  <p>Omzet LM: <span className="font-mono text-text">{formatRupiah(r.omzetLM)}</span></p>
+                  <p>Omzet BR: <span className="font-mono text-text">{formatRupiah(r.omzetBR)}</span></p>
+                  <p className="pt-1 border-t border-border">Total Omzet: <span className="font-mono text-text font-semibold">{formatRupiah(r.totalOmzet)}</span></p>
+                  <p>Laba: <span className="font-mono text-accent">{formatRupiah(r.laba)}</span></p>
+                  <p>Piutang: <span className="font-mono text-piutang">{formatRupiah(r.piutang)}</span></p>
+                </div>
+              </div>
+            ))}
+            <div className="bg-surface-2 border border-border rounded-xl p-4">
+              <p className="text-text font-semibold mb-2">TOTAL</p>
+              <div className="space-y-1 text-[13px] text-text-secondary">
+                <p>Omzet LM: <span className="font-mono text-text">{formatRupiah(totalRowCust.omzetLM)}</span></p>
+                <p>Omzet BR: <span className="font-mono text-text">{formatRupiah(totalRowCust.omzetBR)}</span></p>
+                <p className="pt-1 border-t border-border">Total: <span className="font-mono text-text font-semibold">{formatRupiah(totalRowCust.totalOmzet)}</span></p>
+                <p>Laba: <span className="font-mono text-accent">{formatRupiah(totalRowCust.laba)}</span></p>
+                <p>Piutang: <span className="font-mono text-piutang">{formatRupiah(totalRowCust.piutang)}</span></p>
+              </div>
+            </div>
+          </div>
+
+          {/* Tablet/Desktop table */}
+          <div className="hidden md:block">
+            <div className="relative">
+              <div id="shadow-left-rec-cust" className="pointer-events-none absolute left-0 top-0 h-full w-8 z-10 opacity-0 transition-opacity bg-gradient-to-r from-surface to-transparent" />
+              <div id="shadow-right-rec-cust" className="pointer-events-none absolute right-0 top-0 h-full w-8 z-10 transition-opacity bg-gradient-to-l from-surface to-transparent" />
+              <div
+                className="overflow-x-auto scroll-smooth table-scroll"
+                onScroll={(e) => {
+                  const el = e.currentTarget
+                  const shadowLeft = el.parentElement?.querySelector('#shadow-left-rec-cust') as HTMLElement
+                  const shadowRight = el.parentElement?.querySelector('#shadow-right-rec-cust') as HTMLElement
+                  if (shadowLeft) shadowLeft.style.opacity = el.scrollLeft > 0 ? '1' : '0'
+                  if (shadowRight) shadowRight.style.opacity = el.scrollLeft < el.scrollWidth - el.clientWidth ? '1' : '0'
+                }}
+              >
+              <table className="w-full min-w-[850px]">
+                <thead>
+                  <tr className="text-left text-[13px] uppercase tracking-wider font-semibold bg-surface-2">
+                    <th className="px-6 py-4">Pelanggan</th>
+                    <th className="px-4 py-4 text-right">Omzet LM</th>
+                    <th className="px-4 py-4 text-right">Omzet BR</th>
+                    <th className="px-4 py-4 text-right">Total Omzet</th>
+                    <th className="px-4 py-4 text-right">Laba</th>
+                    <th className="px-6 py-4 text-right">Piutang</th>
                   </tr>
-                ))}
-                <tr className="border-b border-border bg-surface-2/50 font-semibold">
-                  <td className="px-6 py-5 text-text">TOTAL</td>
-                  <td className="px-4 py-5 text-right font-mono text-text">{formatRupiah(totalRowCust.omzetLM)}</td>
-                  <td className="px-4 py-5 text-right font-mono text-text">{formatRupiah(totalRowCust.omzetBR)}</td>
-                  <td className="px-4 py-5 text-right font-mono text-text">{formatRupiah(totalRowCust.totalOmzet)}</td>
-                  <td className="px-4 py-5 text-right font-mono text-accent">{formatRupiah(totalRowCust.laba)}</td>
-                  <td className="px-6 py-5 text-right font-mono text-piutang">{formatRupiah(totalRowCust.piutang)}</td>
-                </tr>
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="text-[15px]">
+                  {perCustomer.map((r, i) => (
+                    <tr key={i} className="border-b border-border hover:bg-surface-2/50 transition-colors odd:bg-surface-2/30">
+                      <td className="px-6 py-5 text-text font-medium truncate max-w-[200px]" title={r.nama}>{r.nama}</td>
+                      <td className="px-4 py-5 text-right font-mono text-text whitespace-nowrap">{formatRupiah(r.omzetLM)}</td>
+                      <td className="px-4 py-5 text-right font-mono text-text whitespace-nowrap">{formatRupiah(r.omzetBR)}</td>
+                      <td className="px-4 py-5 text-right font-mono text-text whitespace-nowrap">{formatRupiah(r.totalOmzet)}</td>
+                      <td className="px-4 py-5 text-right font-mono text-accent whitespace-nowrap">{formatRupiah(r.laba)}</td>
+                      <td className="px-6 py-5 text-right font-mono text-piutang whitespace-nowrap">{formatRupiah(r.piutang)}</td>
+                    </tr>
+                  ))}
+                  <tr className="border-b border-border bg-surface-2/50 font-semibold">
+                    <td className="px-6 py-5 text-text">TOTAL</td>
+                    <td className="px-4 py-5 text-right font-mono text-text whitespace-nowrap">{formatRupiah(totalRowCust.omzetLM)}</td>
+                    <td className="px-4 py-5 text-right font-mono text-text whitespace-nowrap">{formatRupiah(totalRowCust.omzetBR)}</td>
+                    <td className="px-4 py-5 text-right font-mono text-text whitespace-nowrap">{formatRupiah(totalRowCust.totalOmzet)}</td>
+                    <td className="px-4 py-5 text-right font-mono text-accent whitespace-nowrap">{formatRupiah(totalRowCust.laba)}</td>
+                    <td className="px-6 py-5 text-right font-mono text-piutang whitespace-nowrap">{formatRupiah(totalRowCust.piutang)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            </div>
+            <p className="text-xs text-text-muted text-right px-4 py-2 lg:hidden">
+              &larr; Geser untuk lihat lebih &rarr;
+            </p>
           </div>
         </div>
       )}
 
       {/* Per-Month Breakdown */}
       {perMonth.length > 0 && (
-        <div className="bg-surface rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] overflow-hidden">
+        <div className="bg-surface rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
           <div className="px-6 pt-6 pb-4">
             <h2 className="text-[18px] md:text-[22px] font-semibold text-text">Breakdown per Bulan</h2>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[600px]">
-              <thead>
-                <tr className="text-left text-[13px] uppercase tracking-wider font-semibold bg-surface-2">
-                  <th className="px-6 py-4">Bulan</th>
-                  <th className="px-4 py-4 text-right">Omzet LM</th>
-                  <th className="px-4 py-4 text-right">Omzet BR</th>
-                  <th className="px-4 py-4 text-right">Total Omzet</th>
-                  <th className="px-4 py-4 text-right">Laba</th>
-                  <th className="px-6 py-4 text-right">Piutang</th>
-                </tr>
-              </thead>
-              <tbody className="text-[15px]">
-                {perMonth.map((r, i) => (
-                  <tr key={i} className="border-b border-border hover:bg-surface-2/50 transition-colors odd:bg-surface-2/30">
-                    <td className="px-6 py-5 text-text font-medium">{MONTHS[r.month - 1]} {r.year}</td>
-                    <td className="px-4 py-5 text-right font-mono text-text">{formatRupiah(r.omzetLM)}</td>
-                    <td className="px-4 py-5 text-right font-mono text-text">{formatRupiah(r.omzetBR)}</td>
-                    <td className="px-4 py-5 text-right font-mono text-text">{formatRupiah(r.totalOmzet)}</td>
-                    <td className="px-4 py-5 text-right font-mono text-accent">{formatRupiah(r.laba)}</td>
-                    <td className="px-6 py-5 text-right font-mono text-piutang">{formatRupiah(r.piutang)}</td>
+
+          {/* Mobile card view */}
+          <div className="block md:hidden space-y-3 px-4 pb-4">
+            {perMonth.map((r, i) => (
+              <div key={i} className="bg-surface border border-border rounded-xl p-4">
+                <p className="text-text font-semibold mb-2">{MONTHS[r.month - 1]} {r.year}</p>
+                <div className="space-y-1 text-[13px] text-text-secondary">
+                  <p>Omzet LM: <span className="font-mono text-text">{formatRupiah(r.omzetLM)}</span></p>
+                  <p>Omzet BR: <span className="font-mono text-text">{formatRupiah(r.omzetBR)}</span></p>
+                  <p className="pt-1 border-t border-border">Total: <span className="font-mono text-text font-semibold">{formatRupiah(r.totalOmzet)}</span></p>
+                  <p>Laba: <span className="font-mono text-accent">{formatRupiah(r.laba)}</span></p>
+                  <p>Piutang: <span className="font-mono text-piutang">{formatRupiah(r.piutang)}</span></p>
+                </div>
+              </div>
+            ))}
+            <div className="bg-surface-2 border border-border rounded-xl p-4">
+              <p className="text-text font-semibold mb-2">TOTAL</p>
+              <div className="space-y-1 text-[13px] text-text-secondary">
+                <p>Omzet LM: <span className="font-mono text-text">{formatRupiah(totalRowMonth.omzetLM)}</span></p>
+                <p>Omzet BR: <span className="font-mono text-text">{formatRupiah(totalRowMonth.omzetBR)}</span></p>
+                <p className="pt-1 border-t border-border">Total: <span className="font-mono text-text font-semibold">{formatRupiah(totalRowMonth.totalOmzet)}</span></p>
+                <p>Laba: <span className="font-mono text-accent">{formatRupiah(totalRowMonth.laba)}</span></p>
+                <p>Piutang: <span className="font-mono text-piutang">{formatRupiah(totalRowMonth.piutang)}</span></p>
+              </div>
+            </div>
+          </div>
+
+          {/* Tablet/Desktop table */}
+          <div className="hidden md:block">
+            <div className="relative">
+              <div id="shadow-left-rec-month" className="pointer-events-none absolute left-0 top-0 h-full w-8 z-10 opacity-0 transition-opacity bg-gradient-to-r from-surface to-transparent" />
+              <div id="shadow-right-rec-month" className="pointer-events-none absolute right-0 top-0 h-full w-8 z-10 transition-opacity bg-gradient-to-l from-surface to-transparent" />
+              <div
+                className="overflow-x-auto scroll-smooth table-scroll"
+                onScroll={(e) => {
+                  const el = e.currentTarget
+                  const shadowLeft = el.parentElement?.querySelector('#shadow-left-rec-month') as HTMLElement
+                  const shadowRight = el.parentElement?.querySelector('#shadow-right-rec-month') as HTMLElement
+                  if (shadowLeft) shadowLeft.style.opacity = el.scrollLeft > 0 ? '1' : '0'
+                  if (shadowRight) shadowRight.style.opacity = el.scrollLeft < el.scrollWidth - el.clientWidth ? '1' : '0'
+                }}
+              >
+              <table className="w-full min-w-[850px]">
+                <thead>
+                  <tr className="text-left text-[13px] uppercase tracking-wider font-semibold bg-surface-2">
+                    <th className="px-6 py-4">Bulan</th>
+                    <th className="px-4 py-4 text-right">Omzet LM</th>
+                    <th className="px-4 py-4 text-right">Omzet BR</th>
+                    <th className="px-4 py-4 text-right">Total Omzet</th>
+                    <th className="px-4 py-4 text-right">Laba</th>
+                    <th className="px-6 py-4 text-right">Piutang</th>
                   </tr>
-                ))}
-                <tr className="border-b border-border bg-surface-2/50 font-semibold">
-                  <td className="px-6 py-5 text-text">TOTAL</td>
-                  <td className="px-4 py-5 text-right font-mono text-text">{formatRupiah(totalRowMonth.omzetLM)}</td>
-                  <td className="px-4 py-5 text-right font-mono text-text">{formatRupiah(totalRowMonth.omzetBR)}</td>
-                  <td className="px-4 py-5 text-right font-mono text-text">{formatRupiah(totalRowMonth.totalOmzet)}</td>
-                  <td className="px-4 py-5 text-right font-mono text-accent">{formatRupiah(totalRowMonth.laba)}</td>
-                  <td className="px-6 py-5 text-right font-mono text-piutang">{formatRupiah(totalRowMonth.piutang)}</td>
-                </tr>
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="text-[15px]">
+                  {perMonth.map((r, i) => (
+                    <tr key={i} className="border-b border-border hover:bg-surface-2/50 transition-colors odd:bg-surface-2/30">
+                      <td className="px-6 py-5 text-text font-medium">{MONTHS[r.month - 1]} {r.year}</td>
+                      <td className="px-4 py-5 text-right font-mono text-text whitespace-nowrap">{formatRupiah(r.omzetLM)}</td>
+                      <td className="px-4 py-5 text-right font-mono text-text whitespace-nowrap">{formatRupiah(r.omzetBR)}</td>
+                      <td className="px-4 py-5 text-right font-mono text-text whitespace-nowrap">{formatRupiah(r.totalOmzet)}</td>
+                      <td className="px-4 py-5 text-right font-mono text-accent whitespace-nowrap">{formatRupiah(r.laba)}</td>
+                      <td className="px-6 py-5 text-right font-mono text-piutang whitespace-nowrap">{formatRupiah(r.piutang)}</td>
+                    </tr>
+                  ))}
+                  <tr className="border-b border-border bg-surface-2/50 font-semibold">
+                    <td className="px-6 py-5 text-text">TOTAL</td>
+                    <td className="px-4 py-5 text-right font-mono text-text whitespace-nowrap">{formatRupiah(totalRowMonth.omzetLM)}</td>
+                    <td className="px-4 py-5 text-right font-mono text-text whitespace-nowrap">{formatRupiah(totalRowMonth.omzetBR)}</td>
+                    <td className="px-4 py-5 text-right font-mono text-text whitespace-nowrap">{formatRupiah(totalRowMonth.totalOmzet)}</td>
+                    <td className="px-4 py-5 text-right font-mono text-accent whitespace-nowrap">{formatRupiah(totalRowMonth.laba)}</td>
+                    <td className="px-6 py-5 text-right font-mono text-piutang whitespace-nowrap">{formatRupiah(totalRowMonth.piutang)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            </div>
+            <p className="text-xs text-text-muted text-right px-4 py-2 lg:hidden">
+              &larr; Geser untuk lihat lebih &rarr;
+            </p>
           </div>
         </div>
       )}
 
       {/* Detail Transaksi */}
-      <div className="bg-surface rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] overflow-hidden">
+      <div className="bg-surface rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
         <div className="px-6 pt-6 pb-4 flex items-center justify-between">
           <h2 className="text-[18px] md:text-[22px] font-semibold text-text">Detail Transaksi</h2>
           {loadingData && (
@@ -797,8 +889,57 @@ export default function RecapPage() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[600px]">
+            {/* Mobile card view */}
+            <div className="block md:hidden space-y-3 px-4 pb-4">
+              {pagedTx.map((tx) => {
+                const omzetLM = txOmzetByTipe(tx.transaction_lines, 'LM')
+                const omzetBR = txOmzetByTipe(tx.transaction_lines, 'BR')
+                const total = omzetLM + omzetBR + (tx.ongkir ?? 0)
+
+                let badge: React.ReactNode
+                if (tx.is_bonus) {
+                  badge = <span className="inline-block bg-bonus-bg text-bonus border border-bonus/30 rounded-full px-3.5 py-1.5 text-[13px] font-semibold">BONUS</span>
+                } else if (tx.status === 'Lunas') {
+                  badge = <span className="inline-block bg-lunas-bg text-lunas border border-lunas/30 rounded-full px-3.5 py-1.5 text-[13px] font-semibold">Lunas</span>
+                } else {
+                  badge = <span className="inline-block bg-piutang-bg text-piutang border border-piutang/30 rounded-full px-3.5 py-1.5 text-[13px] font-semibold">Piutang</span>
+                }
+
+                return (
+                  <div key={tx.id} className="bg-surface border border-border rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <Link href={`/transactions/${tx.id}`} className="font-mono tracking-normal text-accent font-semibold hover:underline">{tx.nomor_bon}</Link>
+                      {badge}
+                    </div>
+                    <div className="space-y-1 text-[13px] text-text-secondary">
+                      <p>Tanggal: <span className="text-text">{formatDate(tx.tanggal)}</span></p>
+                      <p>Pelanggan: <span className="text-text">{tx.customers?.nama ?? '-'}</span></p>
+                      <p>LM: <span className="font-mono text-text">{formatRupiah(omzetLM)}</span></p>
+                      <p>BR: <span className="font-mono text-text">{formatRupiah(omzetBR)}</span></p>
+                      <p>Ongkir: <span className="font-mono text-text">{formatRupiah(tx.ongkir ?? 0)}</span></p>
+                      <p className="pt-1 border-t border-border text-text-secondary">Total: <span className="font-mono text-text font-semibold">{formatRupiah(total)}</span></p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Tablet/Desktop table */}
+            <div className="hidden md:block">
+              <div className="relative">
+                <div id="shadow-left-rec-detail" className="pointer-events-none absolute left-0 top-0 h-full w-8 z-10 opacity-0 transition-opacity bg-gradient-to-r from-surface to-transparent" />
+                <div id="shadow-right-rec-detail" className="pointer-events-none absolute right-0 top-0 h-full w-8 z-10 transition-opacity bg-gradient-to-l from-surface to-transparent" />
+                <div
+                  className="overflow-x-auto scroll-smooth table-scroll"
+                  onScroll={(e) => {
+                    const el = e.currentTarget
+                    const shadowLeft = el.parentElement?.querySelector('#shadow-left-rec-detail') as HTMLElement
+                    const shadowRight = el.parentElement?.querySelector('#shadow-right-rec-detail') as HTMLElement
+                    if (shadowLeft) shadowLeft.style.opacity = el.scrollLeft > 0 ? '1' : '0'
+                    if (shadowRight) shadowRight.style.opacity = el.scrollLeft < el.scrollWidth - el.clientWidth ? '1' : '0'
+                  }}
+                >
+              <table className="w-full min-w-[850px]">
                 <thead>
                   <tr className="text-left text-[13px] uppercase tracking-wider font-semibold bg-surface-2">
                     <th className="px-6 py-4">Tanggal</th>
@@ -843,7 +984,7 @@ export default function RecapPage() {
                         <td className="px-6 py-5 text-text-secondary whitespace-nowrap">
                           {formatDate(tx.tanggal)}
                         </td>
-                        <td className="px-4 py-5 font-mono text-text whitespace-nowrap">
+                        <td className="px-4 py-5 font-mono tracking-normal text-text whitespace-nowrap">
                           <Link
                             href={`/transactions/${tx.id}`}
                             className="hover:text-accent transition-colors"
@@ -851,7 +992,7 @@ export default function RecapPage() {
                             {tx.nomor_bon}
                           </Link>
                         </td>
-                        <td className="px-4 py-5 text-text whitespace-nowrap">
+                        <td className="px-4 py-5 text-text truncate max-w-[160px]" title={tx.customers?.nama ?? '-'}>
                           {tx.customers?.nama ?? '-'}
                         </td>
                         <td className="px-4 py-5 whitespace-nowrap">{badge}</td>
@@ -873,6 +1014,11 @@ export default function RecapPage() {
                 </tbody>
               </table>
             </div>
+            </div>
+            <p className="text-xs text-text-muted text-right px-4 py-2 lg:hidden">
+              &larr; Geser untuk lihat lebih &rarr;
+            </p>
+          </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
@@ -901,7 +1047,7 @@ export default function RecapPage() {
       </div>
 
       {/* Bonus Log */}
-      <div className="bg-surface rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] overflow-hidden">
+      <div className="bg-surface rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
         <div className="px-6 pt-6 pb-4 flex items-center justify-between">
           <h2 className="text-[18px] md:text-[22px] font-semibold text-text">Log Bonus</h2>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -933,46 +1079,90 @@ export default function RecapPage() {
             <p className="text-text-muted text-[15px]">Belum ada bonus yang diklaim.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[600px]">
-              <thead>
-                <tr className="text-left text-[13px] uppercase tracking-wider font-semibold bg-surface-2">
-                  <th className="px-6 py-4">Tanggal</th>
-                  <th className="px-4 py-4">Pelanggan</th>
-                  <th className="px-4 py-4">Nomor Bon</th>
-                  <th className="px-4 py-4 text-right">Jumlah Bonus</th>
-                  <th className="px-6 py-4">Produk</th>
-                </tr>
-              </thead>
-              <tbody className="text-[15px]">
-                {filteredBonus.map((b) => {
-                  const produk = b.transactions?.transaction_lines
-                    ?.map((l) => l.products?.nama ?? '-')
-                    .join(', ') ?? '-'
+          <>
+            {/* Mobile card view */}
+            <div className="block md:hidden space-y-3 px-4 pb-4">
+              {filteredBonus.map((b) => {
+                const produk = b.transactions?.transaction_lines
+                  ?.map((l) => l.products?.nama ?? '-')
+                  .join(', ') ?? '-'
 
-                  return (
-                    <tr key={b.id} className="border-b border-border hover:bg-surface-2/50 transition-colors odd:bg-surface-2/30">
-                      <td className="px-6 py-5 text-text-secondary whitespace-nowrap">
-                        {b.transactions ? formatDate(b.transactions.tanggal) : '-'}
-                      </td>
-                      <td className="px-4 py-5 text-text whitespace-nowrap">
-                        {b.customers?.nama ?? '-'}
-                      </td>
-                      <td className="px-4 py-5 font-mono text-text whitespace-nowrap">
-                        {b.transactions?.nomor_bon ?? '-'}
-                      </td>
-                      <td className="px-4 py-5 text-right font-mono text-bonus font-medium whitespace-nowrap">
-                        {b.jumlah}
-                      </td>
-                      <td className="px-6 py-5 text-text-secondary text-sm whitespace-nowrap max-w-xs truncate">
-                        {produk}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                return (
+                  <div key={b.id} className="bg-surface border border-border rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-mono tracking-normal text-text font-semibold">{b.transactions?.nomor_bon ?? '-'}</span>
+                      <span className="inline-block bg-bonus-bg text-bonus border border-bonus/30 rounded-full px-3 py-1 text-[12px] font-semibold">{b.jumlah} bonus</span>
+                    </div>
+                    <div className="space-y-1 text-[13px] text-text-secondary">
+                      <p>Pelanggan: <span className="text-text">{b.customers?.nama ?? '-'}</span></p>
+                      <p>Tanggal: <span className="text-text">{b.transactions ? formatDate(b.transactions.tanggal) : '-'}</span></p>
+                      <p>Produk: <span className="text-text">{produk}</span></p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Tablet/Desktop table */}
+            <div className="hidden md:block">
+              <div className="relative">
+                <div id="shadow-left-rec-bonus" className="pointer-events-none absolute left-0 top-0 h-full w-8 z-10 opacity-0 transition-opacity bg-gradient-to-r from-surface to-transparent" />
+                <div id="shadow-right-rec-bonus" className="pointer-events-none absolute right-0 top-0 h-full w-8 z-10 transition-opacity bg-gradient-to-l from-surface to-transparent" />
+                <div
+                  className="overflow-x-auto scroll-smooth table-scroll"
+                  onScroll={(e) => {
+                    const el = e.currentTarget
+                    const shadowLeft = el.parentElement?.querySelector('#shadow-left-rec-bonus') as HTMLElement
+                    const shadowRight = el.parentElement?.querySelector('#shadow-right-rec-bonus') as HTMLElement
+                    if (shadowLeft) shadowLeft.style.opacity = el.scrollLeft > 0 ? '1' : '0'
+                    if (shadowRight) shadowRight.style.opacity = el.scrollLeft < el.scrollWidth - el.clientWidth ? '1' : '0'
+                  }}
+                >
+              <table className="w-full min-w-[850px]">
+                <thead>
+                  <tr className="text-left text-[13px] uppercase tracking-wider font-semibold bg-surface-2">
+                    <th className="px-6 py-4">Tanggal</th>
+                    <th className="px-4 py-4">Pelanggan</th>
+                    <th className="px-4 py-4">Nomor Bon</th>
+                    <th className="px-4 py-4 text-right">Jumlah Bonus</th>
+                    <th className="px-6 py-4">Produk</th>
+                  </tr>
+                </thead>
+                <tbody className="text-[15px]">
+                  {filteredBonus.map((b) => {
+                    const produk = b.transactions?.transaction_lines
+                      ?.map((l) => l.products?.nama ?? '-')
+                      .join(', ') ?? '-'
+
+                    return (
+                      <tr key={b.id} className="border-b border-border hover:bg-surface-2/50 transition-colors odd:bg-surface-2/30">
+                        <td className="px-6 py-5 text-text-secondary whitespace-nowrap">
+                          {b.transactions ? formatDate(b.transactions.tanggal) : '-'}
+                        </td>
+                        <td className="px-4 py-5 text-text truncate max-w-[160px]" title={b.customers?.nama ?? '-'}>
+                          {b.customers?.nama ?? '-'}
+                        </td>
+                        <td className="px-4 py-5 font-mono tracking-normal text-text whitespace-nowrap">
+                          {b.transactions?.nomor_bon ?? '-'}
+                        </td>
+                        <td className="px-4 py-5 text-right font-mono text-bonus font-medium whitespace-nowrap">
+                          {b.jumlah}
+                        </td>
+                        <td className="px-6 py-5 text-text-secondary text-sm truncate max-w-[200px]" title={produk}>
+                          {produk}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+              </div>
+              <p className="text-xs text-text-muted text-right px-4 py-2 lg:hidden">
+                &larr; Geser untuk lihat lebih &rarr;
+              </p>
+            </div>
+          </>
         )}
       </div>
     </div>
