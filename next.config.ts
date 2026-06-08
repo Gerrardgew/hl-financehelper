@@ -1,7 +1,9 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
+/** Minimal Next.js configuration */
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  // Add any custom Next.js options here if needed.
+}
 
-export default nextConfig;
+export default nextConfig
+
