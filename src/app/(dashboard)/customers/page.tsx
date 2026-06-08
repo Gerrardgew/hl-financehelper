@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatRupiah } from '@/lib/utils'
+import ConfirmModal from '@/components/ui/ConfirmModal'
+import Toast, { type ToastType } from '@/components/ui/Toast'
 
 interface DiscountStepRow {
   id: string
@@ -25,6 +27,9 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerRow[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [confirm, setConfirm] = useState<{ id: string; nama: string } | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null)
 
   useEffect(() => {
     let ignore = false
@@ -48,8 +53,7 @@ export default function CustomersPage() {
   }, [])
 
   async function handleDelete(id: string, nama: string) {
-    if (!window.confirm(`Hapus pelanggan "${nama}"?`)) return
-
+    setDeleting(true)
     const supabase = createClient()
     const { error } = await supabase
       .from('customers')
@@ -57,7 +61,9 @@ export default function CustomersPage() {
       .eq('id', id)
 
     if (error) {
-      alert('Gagal menghapus pelanggan')
+      setToast({ message: 'Gagal menghapus pelanggan', type: 'error' })
+      setDeleting(false)
+      setConfirm(null)
       return
     }
 
@@ -68,7 +74,11 @@ export default function CustomersPage() {
       .order('created_at', { ascending: false })
 
     if (data) setCustomers(data as unknown as CustomerRow[])
+    setDeleting(false)
+    setConfirm(null)
   }
+
+  const handleCloseToast = useCallback(() => setToast(null), [])
 
   function formatSteps(steps: DiscountStepRow[], tipe: 'LM' | 'BR'): string {
     const filtered = steps
@@ -148,7 +158,7 @@ export default function CustomersPage() {
                     <Link href={`/customers/${c.id}/edit`} className="bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors">
                       Ubah
                     </Link>
-                    <button onClick={() => handleDelete(c.id, c.nama)} className="text-danger hover:bg-danger-bg font-medium rounded-lg px-4 py-2 text-[13px] transition-colors">
+                    <button onClick={() => setConfirm({ id: c.id, nama: c.nama })} className="text-danger hover:bg-danger-bg font-medium rounded-lg px-4 py-2 text-[13px] transition-colors">
                       Hapus
                     </button>
                   </div>
@@ -220,7 +230,7 @@ export default function CustomersPage() {
                             Ubah
                           </Link>
                           <button
-                            onClick={() => handleDelete(c.id, c.nama)}
+                            onClick={() => setConfirm({ id: c.id, nama: c.nama })}
                             className="text-danger hover:bg-danger-bg font-medium rounded-lg px-4 py-2 text-[13px] transition-colors"
                           >
                             Hapus
@@ -240,6 +250,22 @@ export default function CustomersPage() {
           </>
         )}
       </div>
+
+      {confirm && (
+        <ConfirmModal
+          open
+          title="Hapus Pelanggan"
+          message={`Hapus pelanggan "${confirm.nama}"?`}
+          loading={deleting}
+          loadingText="Menghapus..."
+          onConfirm={() => handleDelete(confirm.id, confirm.nama)}
+          onCancel={() => { setConfirm(null); setDeleting(false) }}
+        />
+      )}
+
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={handleCloseToast} />
+      )}
     </div>
   )
 }

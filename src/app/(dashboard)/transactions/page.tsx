@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatRupiah, formatDate } from '@/lib/utils'
+import ConfirmModal from '@/components/ui/ConfirmModal'
+import Toast, { type ToastType } from '@/components/ui/Toast'
 
 interface TransactionRow {
   id: string
@@ -20,6 +22,9 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<TransactionRow[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [confirm, setConfirm] = useState<{ id: string; nomor_bon: string } | null>(null)
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null)
 
   useEffect(() => {
     let ignore = false
@@ -45,6 +50,46 @@ export default function TransactionsPage() {
     tx.nomor_bon.toLowerCase().includes(search.toLowerCase()) ||
     (tx.customers?.nama ?? '').toLowerCase().includes(search.toLowerCase())
   )
+
+  async function handleDelete(id: string) {
+    setDeletingId(id)
+    const supabase = createClient()
+
+    await supabase
+      .from('bonus_grants')
+      .delete()
+      .eq('transaction_id', id)
+
+    const { error: linesError } = await supabase
+      .from('transaction_lines')
+      .delete()
+      .eq('transaction_id', id)
+
+    if (linesError) {
+      setToast({ message: 'Gagal menghapus transaksi. Coba lagi.', type: 'error' })
+      setDeletingId(null)
+      setConfirm(null)
+      return
+    }
+
+    const { error } = await supabase
+      .from('transactions')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      setToast({ message: 'Gagal menghapus transaksi. Coba lagi.', type: 'error' })
+      setDeletingId(null)
+      setConfirm(null)
+      return
+    }
+
+    setTransactions(prev => prev.filter(tx => tx.id !== id))
+    setDeletingId(null)
+    setConfirm(null)
+  }
+
+  const handleCloseToast = useCallback(() => setToast(null), [])
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -133,14 +178,21 @@ export default function TransactionsPage() {
                       <p>Total: <span className="font-mono text-text font-semibold">{tx.is_bonus ? <span className="bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300 px-3 py-1 rounded-full text-sm font-semibold">GRATIS</span> : formatRupiah(total)}</span></p>
                     </div>
                     <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
-                      <Link href={`/transactions/${tx.id}`} className="bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors">
+                      <Link href={`/transactions/${tx.id}`} className={`bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors ${deletingId === tx.id ? 'pointer-events-none opacity-50' : ''}`}>
                         {'\uD83D\uDD0D'} Detail
                       </Link>
                       {tx.status === 'Piutang' && !tx.is_bonus && (
-                        <Link href={`/transactions/${tx.id}/edit`} className="bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors">
+                        <Link href={`/transactions/${tx.id}/edit`} className={`bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors ${deletingId === tx.id ? 'pointer-events-none opacity-50' : ''}`}>
                           Ubah
                         </Link>
                       )}
+                      <button
+                        onClick={() => setConfirm({ id: tx.id, nomor_bon: tx.nomor_bon })}
+                        disabled={deletingId === tx.id}
+                        className="text-danger hover:bg-danger-bg font-medium rounded-lg px-4 py-2 text-[13px] transition-colors disabled:opacity-50"
+                      >
+                        {deletingId === tx.id ? 'Menghapus...' : '\uD83D\uDDD1\uFE0F Hapus'}
+                      </button>
                     </div>
                   </div>
                 )
@@ -223,18 +275,25 @@ export default function TransactionsPage() {
                           <div className="flex items-center gap-2">
                             <Link
                               href={`/transactions/${tx.id}`}
-                              className="bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors"
+                              className={`bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors ${deletingId === tx.id ? 'pointer-events-none opacity-50' : ''}`}
                             >
                               {'\uD83D\uDD0D'} Detail
                             </Link>
                             {tx.status === 'Piutang' && !tx.is_bonus && (
                               <Link
                                 href={`/transactions/${tx.id}/edit`}
-                                className="bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors"
+                                className={`bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors ${deletingId === tx.id ? 'pointer-events-none opacity-50' : ''}`}
                               >
                                 Ubah
                               </Link>
                             )}
+                            <button
+                              onClick={() => setConfirm({ id: tx.id, nomor_bon: tx.nomor_bon })}
+                              disabled={deletingId === tx.id}
+                              className="text-danger hover:bg-danger-bg font-medium rounded-lg px-4 py-2 text-[13px] transition-colors disabled:opacity-50"
+                            >
+                              {deletingId === tx.id ? 'Menghapus...' : '\uD83D\uDDD1\uFE0F Hapus'}
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -251,6 +310,22 @@ export default function TransactionsPage() {
           </>
         )}
       </div>
+
+      {confirm && (
+        <ConfirmModal
+          open
+          title="Hapus Transaksi"
+          message={`Yakin ingin menghapus Bon "${confirm.nomor_bon}"?\nAksi ini tidak bisa dibatalkan.`}
+          loading={deletingId === confirm.id}
+          loadingText="Menghapus..."
+          onConfirm={() => handleDelete(confirm.id)}
+          onCancel={() => { setConfirm(null); setDeletingId(null) }}
+        />
+      )}
+
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={handleCloseToast} />
+      )}
     </div>
   )
 }

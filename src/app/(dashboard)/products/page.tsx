@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatRupiah } from '@/lib/utils'
+import ConfirmModal from '@/components/ui/ConfirmModal'
+import Toast, { type ToastType } from '@/components/ui/Toast'
 
 interface ProductRow {
   id: string
@@ -18,6 +20,9 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<ProductRow[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [confirm, setConfirm] = useState<{ id: string; nama: string } | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null)
 
   useEffect(() => {
     let ignore = false
@@ -41,8 +46,7 @@ export default function ProductsPage() {
   }, [])
 
   async function handleDelete(id: string, nama: string) {
-    if (!window.confirm(`Hapus produk "${nama}"?`)) return
-
+    setDeleting(true)
     const supabase = createClient()
     const { error } = await supabase
       .from('products')
@@ -50,7 +54,9 @@ export default function ProductsPage() {
       .eq('id', id)
 
     if (error) {
-      alert('Gagal menghapus produk')
+      setToast({ message: 'Gagal menghapus produk', type: 'error' })
+      setDeleting(false)
+      setConfirm(null)
       return
     }
 
@@ -61,7 +67,11 @@ export default function ProductsPage() {
       .order('created_at', { ascending: false })
 
     if (data) setProducts(data as ProductRow[])
+    setDeleting(false)
+    setConfirm(null)
   }
+
+  const handleCloseToast = useCallback(() => setToast(null), [])
 
   const filtered = products.filter((p) =>
     p.nama.toLowerCase().includes(search.toLowerCase())
@@ -139,7 +149,7 @@ export default function ProductsPage() {
                       <Link href={`/products/${p.id}/edit`} className="bg-surface-2 hover:bg-border text-text font-medium rounded-lg px-4 py-2 text-[13px] transition-colors">
                         Ubah
                       </Link>
-                      <button onClick={() => handleDelete(p.id, p.nama)} className="text-danger hover:bg-danger-bg font-medium rounded-lg px-4 py-2 text-[13px] transition-colors">
+                      <button onClick={() => setConfirm({ id: p.id, nama: p.nama })} className="text-danger hover:bg-danger-bg font-medium rounded-lg px-4 py-2 text-[13px] transition-colors">
                         Hapus
                       </button>
                     </div>
@@ -213,7 +223,7 @@ export default function ProductsPage() {
                               Ubah
                             </Link>
                             <button
-                              onClick={() => handleDelete(p.id, p.nama)}
+                              onClick={() => setConfirm({ id: p.id, nama: p.nama })}
                               className="text-danger hover:bg-danger-bg font-medium rounded-lg px-4 py-2 text-[13px] transition-colors"
                             >
                               Hapus
@@ -234,6 +244,22 @@ export default function ProductsPage() {
           </>
         )}
       </div>
+
+      {confirm && (
+        <ConfirmModal
+          open
+          title="Hapus Produk"
+          message={`Hapus produk "${confirm.nama}"?`}
+          loading={deleting}
+          loadingText="Menghapus..."
+          onConfirm={() => handleDelete(confirm.id, confirm.nama)}
+          onCancel={() => { setConfirm(null); setDeleting(false) }}
+        />
+      )}
+
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={handleCloseToast} />
+      )}
     </div>
   )
 }
