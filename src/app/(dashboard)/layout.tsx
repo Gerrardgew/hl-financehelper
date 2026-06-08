@@ -13,34 +13,6 @@ const navItems = [
   { label: 'Laporan', path: '/recap', icon: '\uD83D\uDCC8' },
 ]
 
-function ThemeToggle() {
-  const [mounted, setMounted] = useState(false)
-  const [dark, setDark] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-    setDark(document.documentElement.classList.contains('dark'))
-  }, [])
-
-  function toggle() {
-    const isDark = document.documentElement.classList.toggle('dark')
-    setDark(isDark)
-    localStorage.setItem('hl-theme', isDark ? 'dark' : 'light')
-  }
-
-  if (!mounted) return (
-    <button className="flex items-center justify-center w-full gap-3 px-4 py-3 rounded-xl opacity-0">
-      <span className="text-xl">☀️</span>
-    </button>
-  )
-
-  return (
-    <button onClick={toggle} className="flex items-center justify-center w-full gap-3 px-4 py-3 rounded-xl hover:bg-surface-2 transition-colors">
-      <span className="text-xl">{dark ? '☀️' : '🌙'}</span>
-      <span className="font-medium inline">{dark ? 'Mode Terang' : 'Mode Gelap'}</span>
-    </button>
-  )
-}
 
 function Sidebar() {
   const pathname = usePathname()
@@ -109,7 +81,6 @@ function Sidebar() {
 
       {/* Bottom */}
       <div className="px-2 lg:px-3 pb-4 space-y-2 border-t border-border pt-4 shrink-0">
-        <ThemeToggle />
         {userEmail && (
           <div className="px-3 lg:px-4 py-2 text-sm text-text-muted">
             {userEmail}

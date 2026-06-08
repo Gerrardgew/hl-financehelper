@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import ThemeInitializer from "@/components/ThemeInitializer";
+import Header from "@/components/Header";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -31,27 +33,12 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var theme = localStorage.getItem('hl-theme');
-                  if (theme === 'dark') {
-                    document.documentElement.classList.add('dark');
-                  } else if (!theme) {
-                    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    if (prefersDark) {
-                      document.documentElement.classList.add('dark');
-                    }
-                  }
-                } catch(e) {}
-              })();
-            `,
-          }}
-        />
+        <ThemeInitializer />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <Header />
+        {children}
+      </body>
     </html>
   );
 }
